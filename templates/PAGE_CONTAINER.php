@@ -27,7 +27,7 @@
 <footer class="footer">
     <div class="content has-text-centered">
         <p>
-            <strong>Demo System</strong> by <a href="https://github.com/bubuni" rel="noopener">Bubuni Team</a>. <br>
+            <strong>Demo System</strong> by <a href="https://github.com/Bubuni-Team" rel="noopener">Bubuni Team</a>. <br>
             Наполнено силой Bulma и PHP
         </p>
     </div>
