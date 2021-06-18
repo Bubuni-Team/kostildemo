@@ -7,5 +7,10 @@
     },
     "license": "GNU GPL v3",
     "minimum-stability": "stable",
-    "require": {}
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "App\\": "src\\App"
+        }
+    }
 }

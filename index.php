@@ -13,5 +13,3 @@ require_once $dir . '/src/App.php';
 
 $app = new \App();
 $app->run($dir);
-
-\App::dump('it works');
