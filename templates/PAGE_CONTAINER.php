@@ -2,6 +2,7 @@
 <html class="demoSystem">
 <head>
     <?php
+        $siteName = $options['siteName'];
         $pageTitle = isset($secondaryTitle) ? "$siteName | $secondaryTitle" : $siteName;
     ?>
     <title><?= $pageTitle ?></title>

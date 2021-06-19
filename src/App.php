@@ -18,6 +18,9 @@ class App
     protected static $app = null;
     protected static $config = [];
 
+    /** @var PDO */
+    protected $db;
+
     public static function run($dir)
     {
         self::$dir = $dir;
@@ -26,7 +29,19 @@ class App
 
         require_once $dir . '/vendor/autoload.php';
 
+        self::$app->setup();
         self::$app->handleRequest();
+    }
+
+    public function setup()
+    {
+        $dbConfig = self::$config['db'];
+
+        $this->db = new PDO(
+            sprintf('mysql:dbname=%s;host=%s;port=%d', $dbConfig['dbname'], $dbConfig['host'], $dbConfig['port']),
+            $dbConfig['user'],
+            $dbConfig['password']
+        );
     }
 
     private function handleRequest()
@@ -39,7 +54,8 @@ class App
         }
 
         $controller = new $controllerClass(self::$app);
-        $actionMethod = 'action' . ucfirst(strtolower($_REQUEST['action']));
+        $actionName = isset($_REQUEST['action']) ? ucfirst(strtolower($_REQUEST['action'])) : 'index';
+        $actionMethod = 'action' . $actionName;
 
         if (!is_callable([$controller, $actionMethod]))
         {
@@ -64,7 +80,14 @@ class App
         exit();
     }
 
-    public function renderTemplate($templateName, $params = [])
+    /**
+     * @param $templateName
+     * @param array $params
+     * @return false|string
+     *
+     * @noinspection PhpUnusedLocalVariableInspection
+     */
+    public function renderTemplate($templateName, array $params = [])
     {
         $templateFileName = $this->getTemplateFileName($templateName);
         if (!file_exists($templateFileName))
@@ -75,11 +98,10 @@ class App
         ob_start();
         extract($params);
         require_once $templateFileName;
-        /** @noinspection PhpUnusedLocalVariableInspection */
         $pageContent = ob_get_clean();
 
         ob_start();
-        extract(self::$config['system']);
+        $options = self::$config['system'];
         require_once $this->getTemplateFileName('PAGE_CONTAINER');
 
         return ob_get_clean();
