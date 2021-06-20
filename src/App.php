@@ -147,7 +147,7 @@ class App
         $this->responseHttpCode = $code;
     }
 
-    public function getFromRequest(string $key)
+    public function getFromRequest(string $key): ?string
     {
         return $_REQUEST[$key] ?? null;
     }

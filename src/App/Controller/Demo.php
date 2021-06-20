@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 /**
  * Created by PhpStorm.
  * User: Andriy
@@ -9,6 +10,8 @@
 
 namespace App\Controller;
 
+
+use PDO;
 
 class Demo extends AbstractController
 {
@@ -29,7 +32,7 @@ class Demo extends AbstractController
         $playerStmt->bindValue(':demoIds', implode(', ', array_keys($demoList)));
         $playerStmt->execute();
 
-        foreach ($playerStmt->fetchAll(\PDO::FETCH_ASSOC) as $player)
+        foreach ($playerStmt->fetchAll(PDO::FETCH_ASSOC) as $player)
         {
             $demoList[(int) $player['record_id']]['players'][] = $player;
         }

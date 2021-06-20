@@ -38,7 +38,7 @@ $demo['finished_at'] = "@{$demo['finished_at']}";
         </div>
         <nav class="level is-mobile">
             <div class="level-left">
-                <a class="level-item demo-download" href="?id=<?= $demo['record_id'] ?>">
+                <a class="level-item demo-download" href="./data/demos/<?= $demo['demo_id'] ?>.dem">
                     <span class="icon is-small"><ion-icon name="cloud-download-outline"></ion-icon></span>
                 </a>
                 <div class="level-item demoLength">

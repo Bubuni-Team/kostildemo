@@ -51,8 +51,8 @@ class AbstractController
     {
         return new PrintableException($message, $code);
     }
-
-    protected function getFromRequest(string $key)
+    
+    protected function getFromRequest(string $key): ?string
     {
         return $this->app()->getFromRequest($key);
     }

@@ -1,4 +1,5 @@
 vendor/
 src/config.php
-data/chunks/
+data/chunks/*
 data/demos/
+!data/chunks/.htaccess
