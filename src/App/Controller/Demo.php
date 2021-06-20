@@ -34,7 +34,16 @@ class Demo extends AbstractController
 
         foreach ($playerStmt->fetchAll(PDO::FETCH_ASSOC) as $player)
         {
-            $demoList[(int) $player['record_id']]['players'][] = $player;
+            $demoList[(int) $player['record_id']]['players'][$player['account_id']] = $player;
+        }
+
+        $playerId = $this->getFromRequest('find');
+        if ($playerId)
+        {
+            $demoList = array_filter($demoList, function ($demo) use ($playerId)
+            {
+                return in_array($playerId, array_keys($demo['players'])) ;
+            });
         }
 
         return $this->template('demo_index', [
