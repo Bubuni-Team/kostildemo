@@ -1,2 +1,4 @@
 vendor/
 src/config.php
+data/chunks/
+data/demos/

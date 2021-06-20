@@ -1,5 +1,5 @@
 <?php /** @noinspection PhpIncludeInspection */
-
+declare(strict_types=1);
 /**
  * Created by PhpStorm.
  * User: Andriy
@@ -9,6 +9,7 @@
  */
 
 
+use App\Controller\AbstractController;
 use App\PrintableException;
 use Symfony\Component\VarDumper\VarDumper;
 
@@ -21,9 +22,10 @@ class App
     /** @var PDO */
     protected $db;
 
+    protected $responseHttpCode = 200;
     protected $responseContentType = 'text/html';
 
-    public static function run($dir)
+    public static function run($dir): void
     {
         self::$dir = $dir;
         self::$app = new App();
@@ -35,29 +37,34 @@ class App
         self::$app->handleRequest();
     }
 
-    public function setup()
+    public function setup(): void
     {
         $dbConfig = self::$config['db'];
 
         $this->db = new PDO(
             sprintf('mysql:dbname=%s;host=%s;port=%d', $dbConfig['dbname'], $dbConfig['host'], $dbConfig['port']),
             $dbConfig['user'],
-            $dbConfig['password']
+            $dbConfig['password'],
+            [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+            ]
         );
     }
 
-    private function handleRequest()
+    private function handleRequest(): void
     {
-        $controllerClass = 'App\Controller\\' . ucfirst(strtolower($_REQUEST['controller']));
+        $controllerName = $this->getFromRequest('controller') ?: 'demo';
+        $controllerClass = 'App\Controller\\' . ucfirst(strtolower($controllerName));
 
         if (!class_exists($controllerClass))
         {
             $this->sendNotFound();
         }
 
+        /** @var AbstractController $controller */
         $controller = new $controllerClass(self::$app);
-        $actionName = isset($_REQUEST['action']) ? ucfirst(strtolower($_REQUEST['action'])) : 'index';
-        $actionMethod = 'action' . $actionName;
+        $actionName = $this->getFromRequest('action') ?: 'index';
+        $actionMethod = 'action' . ucfirst(strtolower($actionName));
 
         if (!is_callable([$controller, $actionMethod]))
         {
@@ -65,8 +72,9 @@ class App
         }
 
         try {
+            $controller->preAction();
             $body = $controller->$actionMethod();
-            $this->sendResponse(200, $body, $this->responseContentType);
+            $this->sendResponse($this->responseHttpCode, $body, $this->responseContentType);
         }
         catch (PrintableException $e)
         {
@@ -74,7 +82,7 @@ class App
         }
     }
 
-    public function sendResponse($httpCode, $body, $contentType = 'text/html')
+    public function sendResponse($httpCode, $body, $contentType = 'text/html'): void
     {
         header('Content-Type: ' . $contentType . '; charset=utf8', false, $httpCode);
         header('Content-Length: ' . strlen($body));
@@ -83,13 +91,14 @@ class App
     }
 
     /**
-     * @param $templateName
+     * @param string $templateName
      * @param array $params
+     * @param bool $container
      * @return false|string
      *
      * @noinspection PhpUnusedLocalVariableInspection
      */
-    public function renderTemplate($templateName, array $params = [], $container = false)
+    public function renderTemplate(string $templateName, array $params = [], bool $container = false): string
     {
         $templateFileName = $this->getTemplateFileName($templateName);
         if (!file_exists($templateFileName))
@@ -117,34 +126,44 @@ class App
         return self::$dir . '/templates/' . $templateName . '.php';
     }
 
-    public function sendNotFound()
+    public function sendNotFound(): void
     {
         $this->sendError(404, 'Requested page not found');
     }
 
-    public function sendError($httpCode, $errorText)
+    public function sendError($httpCode, $errorText): void
     {
         // TODO: make error html template
         $this->sendResponse($httpCode, $errorText);
     }
 
-    public function setResponseContentType(string $contentType)
+    public function setResponseContentType(string $contentType): void
     {
         $this->responseContentType = $contentType;
     }
 
-    public function db()
+    public function setResponseHttpCode(int $code): void
+    {
+        $this->responseHttpCode = $code;
+    }
+
+    public function getFromRequest(string $key)
+    {
+        return $_REQUEST[$key] ?? null;
+    }
+
+    public function db(): PDO
     {
         return $this->db;
     }
 
-    public function config()
+    public function config(): array
     {
         return self::$config;
     }
 
-    public static function dump($var)
+    public static function dump($var): void
     {
-        return VarDumper::dump($var);
+        VarDumper::dump($var);
     }
 }

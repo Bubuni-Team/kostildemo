@@ -12,16 +12,19 @@ namespace App\Controller;
 
 
 use App;
+use App\PrintableException;
 use PDO;
 
 class AbstractController
 {
-    protected $app;
+    private $app;
 
     public function __construct(App $app)
     {
         $this->app = $app;
     }
+
+    public function preAction(): void {}
 
     protected function app(): App
     {
@@ -42,5 +45,20 @@ class AbstractController
     protected function template(string $templateName, array $params = []): string
     {
         return $this->app()->renderTemplate($templateName, $params, true);
+    }
+
+    protected function exception(string $message, int $code): PrintableException
+    {
+        return new PrintableException($message, $code);
+    }
+
+    protected function getFromRequest(string $key)
+    {
+        return $this->app()->getFromRequest($key);
+    }
+
+    protected function setHttpCode(int $code): void
+    {
+        $this->app()->setResponseHttpCode($code);
     }
 }

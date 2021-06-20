@@ -11,8 +11,23 @@ declare(strict_types=1);
 namespace App\Controller;
 
 
+use App;
+use App\PrintableException;
+use PDOStatement;
+
 class Api extends AbstractController
 {
+    /**
+     * @throws PrintableException
+     */
+    public function preAction(): void
+    {
+        if (!$this->getServerIdByKey($this->getFromRequest('key')))
+        {
+            throw $this->exception('Invalid key', 400);
+        }
+    }
+
     public function actionConfig(): string
     {
         return $this->json([
@@ -20,7 +35,119 @@ class Api extends AbstractController
         ]);
     }
 
-    protected function getChunkSize()
+    /**
+     * @throws PrintableException
+     */
+    public function actionUpload(): string
+    {
+        $demoId = $this->getFromRequest('demo_id');
+        $chunkId = $this->getFromRequest('chunk_id');
+        if (!$demoId || $chunkId === null)
+        {
+            throw $this->exception('Required parameter is missing.', 400);
+        }
+
+        $chunkDirectory = $this->getChunkDirByDemoId($demoId);
+        if (!file_exists($chunkDirectory))
+        {
+            mkdir($chunkDirectory, 0777, true);
+        }
+
+        $chunkFileName = sprintf('%s/%d', $chunkDirectory, (int) $chunkId);
+        file_put_contents($chunkFileName, file_get_contents('php://input'));
+
+        $this->setHttpCode(201);
+        return $this->json([
+            'status' => 0
+        ]);
+    }
+
+    /**
+     * @throws PrintableException
+     */
+    public function actionFinish(): string
+    {
+        $serverId = $this->getServerIdByKey($this->getFromRequest('key'));
+        $demoData = @json_decode(file_get_contents('php://input'), true);
+        if (json_last_error() !== JSON_ERROR_NONE)
+        {
+            throw $this->exception(json_last_error_msg(), 400);
+        }
+        $demoId = $demoData['unique_id'];
+
+        $chunkDir = $this->getChunkDirByDemoId($demoId);
+        $chunkList = array_diff(scandir($chunkDir), ['.', '..']);
+        sort($chunkList);
+
+        $demoFd = fopen($this->getDemoFileNameByDemoId($demoId), 'wb');
+        try
+        {
+            foreach ($chunkList as $chunkName)
+            {
+                $chunkFd = fopen($chunkDir . '/' . $chunkName, 'rb');
+                do {
+                    $writeRes = fwrite($demoFd, fread($chunkFd, 4096));
+                    if ($writeRes === false)
+                    {
+                        fclose($chunkFd);
+                        throw $this->exception('An error occured. Enable debug to see details.', 500);
+                    }
+                } while (!feof($chunkFd));
+
+                fclose($chunkFd);
+            }
+        }
+        finally
+        {
+            fclose($demoFd);
+        }
+
+        $db = $this->db();
+
+        $db->beginTransaction();
+        $demoInsertStmt = $db->prepare(
+            'INSERT INTO `record` 
+                        (demo_id, server_id, map, uploaded_at, started_at, finished_at) 
+                 VALUES (:demoId, :serverId, :map, :uploadedAt, :startedAt, :finishedAt)'
+        );
+
+        $this->bulkBindValue($demoInsertStmt, [
+            ':demoId' => $demoId,
+            ':serverId' => $serverId,
+            ':map' => $demoData['play_map'],
+            ':uploadedAt' => time(),
+            ':startedAt' => $demoData['start_time'],
+            ':finishedAt' => $demoData['end_time']
+        ]);
+        $demoInsertStmt->execute();
+        $recordId = $db->lastInsertId();
+
+        $playerInsertStmt = $db->prepare('INSERT INTO `record_player` 
+                    (record_id, account_id, username) 
+             VALUES (:recordId, :accountId, :username)');
+
+        $playerInsertStmt->bindValue(':recordId', $recordId);
+        foreach ($demoData['players'] as $player)
+        {
+            $playerInsertStmt->bindValue(':accountId', $player['account_id']);
+            $playerInsertStmt->bindValue(':username', $player['name']);
+            $playerInsertStmt->execute();
+        }
+        $db->commit();
+
+        $this->setHttpCode(201);
+        return $this->json($chunkList);
+    }
+
+    protected function bulkBindValue(PDOStatement $statement, array $data)
+    {
+        foreach ($data as $key => $value)
+        {
+            $statement->bindValue($key, $value);
+        }
+    }
+
+    protected function getChunkSize(): int
     {
         $config = $this->app()->config()['system']['chunkSize'] ?? 'auto';
         if (is_int($config))
@@ -30,13 +157,13 @@ class Api extends AbstractController
 
         if ($config === 'auto')
         {
-            // This method is very complicant. We're try get all possible
-            // limitations and select the strongest (lowest) value. This
-            // should work the best thing.
+            // This method is very complicated.
+            // We're trying to get all possible limitations and select the strongest (lowest) value.
+            // This should work best.
             $values = [];
 
-            // We're try detect CloudFlare.
-            // Very dumbest method, but should work.
+            // We're trying to detect CloudFlare.
+            // The dumbest method, but should work.
             foreach (['CF_REQUEST_ID', 'CF_CONNECTING_IP', 'CF_VISITOR', 'CF_RAY', 'CF_IPCOUNTRY'] as $header)
             {
                 if (array_key_exists('HTTP_' . $header, $_SERVER))
@@ -76,5 +203,28 @@ class Api extends AbstractController
         }
 
         return $bytes;
+    }
+
+    protected function getServerIdByKey(string $key): ?int
+    {
+        foreach ($this->app()->config()['servers'] as $serverId => $server)
+        {
+            if ($server['key'] === $key)
+            {
+                return $serverId;
+            }
+        }
+
+        return null;
+    }
+
+    protected function getChunkDirByDemoId(string $demoId): string
+    {
+        return sprintf('%s/data/chunks/%s', App::$dir, $demoId);
+    }
+
+    protected function getDemoFileNameByDemoId(string $demoId): string
+    {
+        return sprintf('%s/data/demos/%s.dem', App::$dir, $demoId);
     }
 }

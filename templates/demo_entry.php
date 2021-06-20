@@ -1,3 +1,9 @@
+<?php
+$demo['uploaded_at'] = "@{$demo['uploaded_at']}";
+$demo['started_at'] = "@{$demo['started_at']}";
+$demo['finished_at'] = "@{$demo['finished_at']}";
+?>
+
 <article class="media demoRecord" data-map="<?= htmlspecialchars($demo['map']) ?>" data-server="<?= $demo['server_id'] ?>"
          data-demo-id="<?= $demo['record_id'] ?>">
     <figure class="media-left">
