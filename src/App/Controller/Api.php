@@ -84,7 +84,8 @@ class Api extends AbstractController
         {
             foreach ($chunkList as $chunkName)
             {
-                $chunkFd = fopen($chunkDir . '/' . $chunkName, 'rb');
+                $chunkFileName = $chunkDir . '/' . $chunkName;
+                $chunkFd = fopen($chunkFileName, 'rb');
                 do {
                     $writeRes = fwrite($demoFd, fread($chunkFd, 4096));
                     if ($writeRes === false)
@@ -94,6 +95,7 @@ class Api extends AbstractController
                     }
                 } while (!feof($chunkFd));
 
+                unlink($chunkFileName);
                 fclose($chunkFd);
             }
         }
@@ -101,6 +103,7 @@ class Api extends AbstractController
         {
             fclose($demoFd);
         }
+        rmdir($chunkDir);
 
         $db = $this->db();
 
