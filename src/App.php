@@ -161,9 +161,4 @@ class App
     {
         return self::$config;
     }
-
-    public static function dump($var): void
-    {
-        VarDumper::dump($var);
-    }
 }

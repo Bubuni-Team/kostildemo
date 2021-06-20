@@ -2,9 +2,6 @@
     "name": "bubuni/kostildemo",
     "description": "Kostilnie demki dlya rabotyag",
     "type": "project",
-    "require-dev": {
-        "symfony/var-dumper": "^5.3"
-    },
     "license": "GNU GPL v3",
     "minimum-stability": "stable",
     "require": {
