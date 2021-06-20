@@ -14,10 +14,12 @@ $mapImageFullFileName = sprintf('%s/assets/maps/%s.png', App::$dir, $demo['map']
 $mapImage = file_exists($mapImageFullFileName) ?
             './assets/maps/' . $demo['map'] . '.png' :
             './assets/maps/nomap.png';
+
+$playerIds = ',' . implode(',', array_keys($demo['players'])) . ',';
 ?>
 
 <article class="media demoRecord" data-map="<?= htmlspecialchars($demo['map']) ?>" data-server="<?= $demo['server_id'] ?>"
-         data-demo-id="<?= $demo['record_id'] ?>">
+         data-demo-id="<?= $demo['record_id'] ?>" data-player-ids="<?= $playerIds ?>">
     <figure class="media-left">
         <p class="image is-64x64">
             <img src="<?= $mapImage ?>" title="<?= $prettyMapName ?>" alt="<?= $prettyMapName ?>" />
@@ -32,7 +34,8 @@ $mapImage = file_exists($mapImageFullFileName) ?
             </p>
             <div class="tags players">
                 <?php foreach ($demo['players'] as $player): ?>
-                    <div class="tag player" data-account-id="<?= $player['account_id'] ?>">
+                    <div class="tag player<?= $player['account_id'] == $playerId ? ' is-warning' : '' ?>"
+                         data-account-id="<?= $player['account_id'] ?>">
                         <a href="https://steamcommunity.com/profiles/[U:1:<?= $player['account_id'] ?>]/"
                            target="_blank" class="profile-link">
                             <?= htmlspecialchars($player['username']) ?>

@@ -6,7 +6,9 @@
             <?php foreach ($demoList as $demo): ?>
                 <?= $this->renderTemplate('demo_entry', [
                         'demo' => $demo,
-                        'server' => self::$config['servers'][(int) $demo['server_id']]])
+                        'server' => self::$config['servers'][(int) $demo['server_id']],
+                        'playerId' => $playerId
+                ]);
                 ?>
             <?php endforeach; ?>
         <?php endif; ?>
