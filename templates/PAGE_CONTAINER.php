@@ -11,6 +11,8 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
     <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
+
+    <link rel="stylesheet" href="assets/css/main.css" />
 </head>
 <body>
 <section class="section">

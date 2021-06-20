@@ -16,6 +16,6 @@ return [
         'dbname' => 'kostildemo'
     ],
     'system' => [
-        'siteName' => 'Demo system'
+        'siteName' => 'Demo system',
     ]
 ];

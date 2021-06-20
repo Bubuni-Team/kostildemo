@@ -8,7 +8,9 @@
     "license": "GNU GPL v3",
     "minimum-stability": "stable",
     "require": {
-        "ext-pdo": "*"
+        "php": "^7.0",
+        "ext-pdo": "*",
+        "ext-json": "*"
     },
     "autoload": {
         "psr-4": {

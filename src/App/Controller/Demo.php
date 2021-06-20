@@ -12,8 +12,31 @@ namespace App\Controller;
 
 class Demo extends AbstractController
 {
-    public function actionIndex()
+    public function actionIndex(): string
     {
-        return $this->template('demo_index', ['secondaryTitle' => 'Demo index']);
+        $db = $this->db();
+        $rawDemoList = $db->query("SELECT * FROM `record`");
+
+        $demoList = [];
+        foreach ($rawDemoList as $demo)
+        {
+            $recordId = (int) $demo['record_id'];
+            $demoList[$recordId] = $demo;
+            $demoList[$recordId]['players'] = [];
+        }
+
+        $playerStmt = $db->prepare("SELECT * FROM `record_player` WHERE `record_id` IN (:demoIds)");
+        $playerStmt->bindValue(':demoIds', implode(', ', array_keys($demoList)));
+        $playerStmt->execute();
+
+        foreach ($playerStmt->fetchAll(\PDO::FETCH_ASSOC) as $player)
+        {
+            $demoList[(int) $player['record_id']]['players'][] = $player;
+        }
+
+        return $this->template('demo_index', [
+            'secondaryTitle' => 'Demo index',
+            'demoList' => $demoList,
+        ]);
     }
 }

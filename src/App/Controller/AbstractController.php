@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Created by PhpStorm.
  * User: Andriy
@@ -11,6 +12,7 @@ namespace App\Controller;
 
 
 use App;
+use PDO;
 
 class AbstractController
 {
@@ -26,8 +28,19 @@ class AbstractController
         return $this->app;
     }
 
-    protected function template($templateName, $params = [])
+    protected function db(): PDO
     {
-        return $this->app()->renderTemplate($templateName, $params);
+        return $this->app()->db();
+    }
+
+    protected function json(array $data): string
+    {
+        $this->app()->setResponseContentType('application/json');
+        return json_encode($data);
+    }
+
+    protected function template(string $templateName, array $params = []): string
+    {
+        return $this->app()->renderTemplate($templateName, $params, true);
     }
 }

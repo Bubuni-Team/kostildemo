@@ -21,6 +21,8 @@ class App
     /** @var PDO */
     protected $db;
 
+    protected $responseContentType = 'text/html';
+
     public static function run($dir)
     {
         self::$dir = $dir;
@@ -64,7 +66,7 @@ class App
 
         try {
             $body = $controller->$actionMethod();
-            $this->sendResponse(200, $body);
+            $this->sendResponse(200, $body, $this->responseContentType);
         }
         catch (PrintableException $e)
         {
@@ -87,7 +89,7 @@ class App
      *
      * @noinspection PhpUnusedLocalVariableInspection
      */
-    public function renderTemplate($templateName, array $params = [])
+    public function renderTemplate($templateName, array $params = [], $container = false)
     {
         $templateFileName = $this->getTemplateFileName($templateName);
         if (!file_exists($templateFileName))
@@ -98,11 +100,14 @@ class App
         ob_start();
         extract($params);
         require_once $templateFileName;
-        $pageContent = ob_get_clean();
 
-        ob_start();
-        $options = self::$config['system'];
-        require_once $this->getTemplateFileName('PAGE_CONTAINER');
+        if ($container)
+        {
+            $pageContent = ob_get_clean();
+            ob_start();
+            $options = self::$config['system'];
+            require_once $this->getTemplateFileName('PAGE_CONTAINER');
+        }
 
         return ob_get_clean();
     }
@@ -122,7 +127,22 @@ class App
         // TODO: make error html template
         $this->sendResponse($httpCode, $errorText);
     }
-    
+
+    public function setResponseContentType(string $contentType)
+    {
+        $this->responseContentType = $contentType;
+    }
+
+    public function db()
+    {
+        return $this->db;
+    }
+
+    public function config()
+    {
+        return self::$config;
+    }
+
     public static function dump($var)
     {
         return VarDumper::dump($var);
