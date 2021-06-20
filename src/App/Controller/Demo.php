@@ -49,6 +49,7 @@ class Demo extends AbstractController
         return $this->template('demo_index', [
             'secondaryTitle' => 'Demo index',
             'demoList' => $demoList,
+            'playerId' => $playerId
         ]);
     }
 }
