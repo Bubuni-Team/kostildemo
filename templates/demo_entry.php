@@ -1,15 +1,26 @@
 <?php
+/**
+ * @noinspection PhpUndefinedClassInspection
+ * @noinspection PhpUndefinedVariableInspection
+ * @noinspection PhpUnhandledExceptionInspection
+ */
+
 $demo['uploaded_at'] = "@{$demo['uploaded_at']}";
 $demo['started_at'] = "@{$demo['started_at']}";
 $demo['finished_at'] = "@{$demo['finished_at']}";
+
 $prettyMapName = self::$config['mapNames'][$demo['map']] ?? $demo['map'];
+$mapImageFullFileName = sprintf('%s/assets/maps/%s.png', App::$dir, $demo['map']);
+$mapImage = file_exists($mapImageFullFileName) ?
+            './assets/maps/' . $demo['map'] . '.png' :
+            './assets/maps/nomap.png';
 ?>
 
 <article class="media demoRecord" data-map="<?= htmlspecialchars($demo['map']) ?>" data-server="<?= $demo['server_id'] ?>"
          data-demo-id="<?= $demo['record_id'] ?>">
     <figure class="media-left">
         <p class="image is-64x64">
-            <img src="assets/maps/<?= $demo['map'] ?>.png" title="<?= $prettyMapName ?>" />
+            <img src="<?= $mapImage ?>" title="<?= $prettyMapName ?>" alt="<?= $prettyMapName ?>" />
         </p>
     </figure>
 
