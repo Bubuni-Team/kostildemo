@@ -17,5 +17,10 @@ return [
     ],
     'system' => [
         'siteName' => 'Demo system',
+    ],
+    'mapNames' => [
+        'de_dust2' => 'Dust 2',
+        'de_mirage' => 'Mirage',
+        'de_inferno' => 'Inferno'
     ]
 ];

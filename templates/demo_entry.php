@@ -2,20 +2,21 @@
 $demo['uploaded_at'] = "@{$demo['uploaded_at']}";
 $demo['started_at'] = "@{$demo['started_at']}";
 $demo['finished_at'] = "@{$demo['finished_at']}";
+$prettyMapName = self::$config['mapNames'][$demo['map']] ?? $demo['map'];
 ?>
 
 <article class="media demoRecord" data-map="<?= htmlspecialchars($demo['map']) ?>" data-server="<?= $demo['server_id'] ?>"
          data-demo-id="<?= $demo['record_id'] ?>">
     <figure class="media-left">
         <p class="image is-64x64">
-            <img src="assets/maps/<?= $demo['map'] ?>.png" title="<?= $demo['map'] ?>" />
+            <img src="assets/maps/<?= $demo['map'] ?>.png" title="<?= $prettyMapName ?>" />
         </p>
     </figure>
 
     <div class="media-content">
         <div class="content">
             <p>
-                <strong class="mapName"><?= $demo['map'] ?></strong>
+                <strong class="mapName"><?= $prettyMapName ?></strong>
                 <small class="serverName"><?= $server['name'] ?></small>
             </p>
             <div class="tags players">
