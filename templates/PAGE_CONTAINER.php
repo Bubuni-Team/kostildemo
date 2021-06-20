@@ -15,17 +15,18 @@
     <link rel="stylesheet" href="assets/css/main.css" />
 </head>
 <body>
-<section class="section">
-    <div class="container">
-        <h1 class="title"><?= $pageTitle ?></h1>
-    </div>
-</section>
-<section class="section">
-    <div class="container">
-        <?= $pageContent ?>
-    </div>
-</section>
-
+<div class="main-content">
+    <section class="section">
+        <div class="container">
+            <h1 class="title"><?= $pageTitle ?></h1>
+        </div>
+    </section>
+    <section class="section">
+        <div class="container">
+            <?= $pageContent ?>
+        </div>
+    </section>
+</div>
 
 <footer class="footer">
     <div class="content has-text-centered">
