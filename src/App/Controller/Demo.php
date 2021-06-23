@@ -18,7 +18,7 @@ class Demo extends AbstractController
     public function actionIndex(): string
     {
         $db = $this->db();
-        $rawDemoList = $db->query("SELECT * FROM `record`", PDO::FETCH_ASSOC);
+        $rawDemoList = $db->query("SELECT * FROM `record` ORDER BY `uploaded_at` DESC", PDO::FETCH_ASSOC);
 
         $demoList = [];
         foreach ($rawDemoList as $demo)
