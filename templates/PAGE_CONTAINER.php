@@ -18,7 +18,7 @@
 <div class="main-content">
     <section class="section">
         <div class="container">
-            <h1 class="title"><?= $pageTitle ?></h1>
+            <h1 class="title"><?= $secondaryTitle ?? $pageTitle ?></h1>
         </div>
     </section>
     <section class="section">
