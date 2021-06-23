@@ -64,11 +64,15 @@ $playerIds = ',' . implode(',', array_keys($demo['players'])) . ',';
                 </a>
                 <div class="level-item demoLength">
                     <span class="icon is-small"><ion-icon name="time-outline"></ion-icon></span>
-                    <?= (new DateTime($demo['finished_at']))->diff(new DateTime($demo['started_at']))->format('%I:%S') ?>
+                    <?php
+                        $diff = (new DateTime($demo['finished_at']))->diff(new DateTime($demo['started_at']));
+                        $format = $diff->h > 0 ? '%H:%I:%S' : '%I:%S';
+                    ?>
+                    <?= $diff->format($format) ?>
                 </div>
                 <div class="level-item demoRecordedAt">
                     <span class="icon is-small"><ion-icon name="calendar-outline"></ion-icon></span>
-                    <?= (new DateTime($demo['uploaded_at']))->format('d.m h:i') ?>
+                    <?= (new DateTime($demo['uploaded_at']))->format('d.m H:i') ?>
                 </div>
             </div>
         </nav>
