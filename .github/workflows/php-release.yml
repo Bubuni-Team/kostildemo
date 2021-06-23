@@ -1,0 +1,71 @@
+name: PHP Composer
+
+on:
+  push:
+    tags:
+      - 'v*'
+      
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate --strict
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v2
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+    
+    - name: Create release archive
+      run: |
+        rm -rf composer.json composer.lock
+        tar -czf release.tar.gz
+    
+    - name: Create checksum
+      run: |
+        sha256sum release.tar.gz > checksum.txt
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: true
+        prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
+    
+    - name: Upload binary
+      id: upload-release-archive
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: release.tar.gz
+        asset_name: release.tar.gz
+        asset_content_type: application/gzip
+    
+    - name: Upload checksum
+      id: upload-release-checksum
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./checksum.txt
+        asset_name: checksum.txt
+        asset_content_type: text/plain
