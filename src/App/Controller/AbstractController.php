@@ -61,4 +61,9 @@ class AbstractController
     {
         $this->app()->setResponseHttpCode($code);
     }
+
+    protected function setHeader(string $name, string $value): void
+    {
+        $this->app()->setHeader($name, $value);
+    }
 }

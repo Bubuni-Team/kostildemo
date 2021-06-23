@@ -24,6 +24,7 @@ class App
 
     protected $responseHttpCode = 200;
     protected $responseContentType = 'text/html';
+    protected $responseHeaders = [];
 
     public static function run($dir): void
     {
@@ -86,6 +87,10 @@ class App
     {
         header('Content-Type: ' . $contentType . '; charset=utf8', false, $httpCode);
         header('Content-Length: ' . strlen($body));
+        foreach ($this->responseHeaders as $name => $value)
+        {
+            header(sprintf('%s: %s', $name, $value));
+        }
         echo $body;
         exit();
     }
@@ -145,6 +150,11 @@ class App
     public function setResponseHttpCode(int $code): void
     {
         $this->responseHttpCode = $code;
+    }
+
+    public function setHeader(string $name, string $value): void
+    {
+        $this->responseHeaders[$name] = $value;
     }
 
     public function getFromRequest(string $key): ?string
