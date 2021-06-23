@@ -2,7 +2,7 @@
     "name": "bubuni/kostildemo",
     "description": "Kostilnie demki dlya rabotyag",
     "type": "project",
-    "license": "GNU GPL v3",
+    "license": "GPL-3.0-only",
     "minimum-stability": "stable",
     "require": {
         "php": "^7.1",
