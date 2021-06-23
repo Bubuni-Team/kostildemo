@@ -30,7 +30,13 @@ $playerIds = ',' . implode(',', array_keys($demo['players'])) . ',';
         <div class="content">
             <p>
                 <strong class="mapName"><?= $prettyMapName ?></strong>
-                <small class="serverName"><?= $server['name'] ?></small>
+                <?php if (isset($server['address'])): ?>
+                    <small class="serverName">
+                        <a href="steam://connect/<?= $server['address'] ?>"><?= $server['name'] ?></a>
+                    </small>
+                <?php else: ?>
+                    <small class="serverName"><?= $server['name'] ?></small>
+                <?php endif; ?>
             </p>
             <div class="tags players">
                 <?php foreach ($demo['players'] as $player): ?>
@@ -71,4 +77,5 @@ $playerIds = ',' . implode(',', array_keys($demo['players'])) . ',';
     <div class="media-right">
         <button class="delete"></button>
     </div>
-<?php endif; ?>
+    <?php endif; ?>
+</article>

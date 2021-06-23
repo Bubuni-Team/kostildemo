@@ -17,6 +17,8 @@ return [
     ],
     'system' => [
         'siteName' => 'Demo system',
+        'key' => 'topsecret',
+        'address' => '127.0.0.1:27015'
     ],
     'mapNames' => [
         'de_dust2' => 'Dust 2',
