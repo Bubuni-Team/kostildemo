@@ -18,7 +18,7 @@ class Demo extends AbstractController
     public function actionIndex(): string
     {
         $db = $this->db();
-        $rawDemoList = $db->query("SELECT * FROM `record`");
+        $rawDemoList = $db->query("SELECT * FROM `record`", PDO::FETCH_ASSOC);
 
         $demoList = [];
         foreach ($rawDemoList as $demo)
@@ -28,28 +28,32 @@ class Demo extends AbstractController
             $demoList[$recordId]['players'] = [];
         }
 
-        $playerStmt = $db->prepare("SELECT * FROM `record_player` WHERE `record_id` IN (:demoIds)");
-        $playerStmt->bindValue(':demoIds', implode(', ', array_keys($demoList)));
-        $playerStmt->execute();
-
-        foreach ($playerStmt->fetchAll(PDO::FETCH_ASSOC) as $player)
+        if (!empty($demoList))
         {
-            $demoList[(int) $player['record_id']]['players'][$player['account_id']] = $player;
-        }
+            $playerStmt = $db->prepare(
+                sprintf("SELECT * FROM `record_player` WHERE `record_id` IN (%s)", implode(',', array_keys($demoList)))
+            );
+            $playerStmt->execute();
 
-        $playerId = $this->getFromRequest('find');
-        if ($playerId)
-        {
-            $demoList = array_filter($demoList, function ($demo) use ($playerId)
+            foreach ($playerStmt->fetchAll(PDO::FETCH_ASSOC) as $player)
             {
-                return in_array($playerId, array_keys($demo['players'])) ;
-            });
+                $demoList[(int) $player['record_id']]['players'][$player['account_id']] = $player;
+            }
+
+            $playerId = $this->getFromRequest('find');
+            if ($playerId)
+            {
+                $demoList = array_filter($demoList, function ($demo) use ($playerId)
+                {
+                    return in_array($playerId, array_keys($demo['players']));
+                });
+            }
         }
 
         return $this->template('demo_index', [
             'secondaryTitle' => 'Demo index',
             'demoList' => $demoList,
-            'playerId' => $playerId
+            'playerId' => $playerId ?? null
         ]);
     }
 }
