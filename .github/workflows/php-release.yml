@@ -31,7 +31,7 @@ jobs:
     - name: Create release archive
       run: |
         rm -rf composer.json composer.lock
-        tar -czf release.tar.gz
+        tar -czf release.tar.gz *
     
     - name: Create checksum
       run: |
