@@ -1,0 +1,22 @@
+name: Code analysis
+
+on:
+  push:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  validate:
+    name: Validate composer.json and run Psalm
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Psalm
+        uses: docker://vimeo/psalm-github-actions
+

@@ -6,15 +6,28 @@ on:
       - 'v*'
       
 jobs:
+  validate:
+    name: Validate composer.json and run Psalm
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Psalm
+        uses: docker://vimeo/psalm-github-actions
+
+
   build-release:
+    name: Build release archive
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
 
     - name: Cache Composer packages
       id: composer-cache

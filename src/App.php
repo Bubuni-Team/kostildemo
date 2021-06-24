@@ -14,32 +14,42 @@ use App\PrintableException;
 
 class App
 {
+    /** @var string */
     public static $dir;
+
+    /** @var App|null */
     protected static $app = null;
+
+    /** @var array */
     protected static $config = [];
 
     /** @var PDO */
     protected $db;
 
+    /** @var int */
     protected $responseHttpCode = 200;
+
+    /** @var string */
     protected $responseContentType = 'text/html';
+
+    /** @var array */
     protected $responseHeaders = [];
 
+    /** @var bool */
     protected $includePageContainer = true;
 
-    public static function run($dir): void
+    public static function run(string $dir): void
     {
         self::$dir = $dir;
-        self::$app = new App();
         self::$config = require_once self::$dir . '/src/config.php';
-
         require_once $dir . '/vendor/autoload.php';
 
-        self::$app->setup();
+        self::$app = new App();
+
         self::$app->handleRequest();
     }
 
-    public function setup(): void
+    public function __construct()
     {
         $dbConfig = self::$config['db'];
 
@@ -80,11 +90,11 @@ class App
         }
         catch (PrintableException $e)
         {
-            $this->sendError($e->getCode(), $e->getMessage());
+            $this->sendError((int) $e->getCode(), $e->getMessage());
         }
     }
 
-    public function sendResponse($httpCode, $body, $contentType = 'text/html'): void
+    public function sendResponse(int $httpCode, string $body, string $contentType = 'text/html'): void
     {
         header('Content-Type: ' . $contentType . '; charset=utf8', false, $httpCode);
         header('Content-Length: ' . strlen($body));
@@ -99,8 +109,7 @@ class App
     /**
      * @param string $templateName
      * @param array $params
-     *
-     * @return false|string
+     * @return string
      */
     public function renderTemplate(string $templateName, array $params = []): string
     {
@@ -130,7 +139,7 @@ class App
         return $controllerResponse;
     }
 
-    public function getTemplateFileName($templateName): string
+    public function getTemplateFileName(string $templateName): string
     {
         return self::$dir . '/templates/' . $templateName . '.php';
     }
@@ -140,7 +149,7 @@ class App
         $this->sendError(404, 'Requested page not found');
     }
 
-    public function sendError($httpCode, $errorText): void
+    public function sendError(int $httpCode, string $errorText): void
     {
         // TODO: make error html template
         $this->sendResponse($httpCode, $errorText);

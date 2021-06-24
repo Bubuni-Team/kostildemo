@@ -44,7 +44,7 @@ class AbstractController
 
     protected function template(string $templateName, array $params = []): string
     {
-        return $this->app()->renderTemplate($templateName, $params, true);
+        return $this->app()->renderTemplate($templateName, $params);
     }
 
     protected function exception(string $message, int $code): PrintableException

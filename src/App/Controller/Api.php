@@ -22,7 +22,13 @@ class Api extends AbstractController
      */
     public function preAction(): void
     {
-        if (!$this->getServerIdByKey($this->getFromRequest('key')))
+        $key = $this->getFromRequest('key');
+        if (!$key)
+        {
+            throw $this->exception('API key must be provided in request', 400);
+        }
+
+        if (!$this->getServerIdByKey($key))
         {
             throw $this->exception('Invalid key', 400);
         }
@@ -67,7 +73,13 @@ class Api extends AbstractController
      */
     public function actionFinish(): string
     {
-        $serverId = $this->getServerIdByKey($this->getFromRequest('key'));
+        $key = $this->getFromRequest('key');
+        if (!$key)
+        {
+            throw $this->exception('API key must be provided in request', 400);
+        }
+
+        $serverId = $this->getServerIdByKey($key);
         $demoData = @json_decode(file_get_contents('php://input'), true);
         if (json_last_error() !== JSON_ERROR_NONE)
         {
@@ -142,7 +154,7 @@ class Api extends AbstractController
         return $this->json($chunkList);
     }
 
-    protected function bulkBindValue(PDOStatement $statement, array $data)
+    protected function bulkBindValue(PDOStatement $statement, array $data): void
     {
         foreach ($data as $key => $value)
         {
