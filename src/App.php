@@ -113,7 +113,7 @@ class App
 
         ob_start();
         extract($params);
-        require_once $templateFileName;
+        require $templateFileName;
 
         if ($container)
         {
