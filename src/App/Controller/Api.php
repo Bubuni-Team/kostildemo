@@ -117,7 +117,7 @@ class Api extends AbstractController
         $this->bulkBindValue($demoInsertStmt, [
             ':demoId' => $demoId,
             ':serverId' => $serverId,
-            ':map' => $demoData['play_map'],
+            ':map' => str_replace('\\', '/', $demoData['play_map']),
             ':uploadedAt' => time(),
             ':startedAt' => $demoData['start_time'],
             ':finishedAt' => $demoData['end_time']

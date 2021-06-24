@@ -9,7 +9,12 @@ $demo['uploaded_at'] = "@{$demo['uploaded_at']}";
 $demo['started_at'] = "@{$demo['started_at']}";
 $demo['finished_at'] = "@{$demo['finished_at']}";
 
-$prettyMapName = self::$config['mapNames'][$demo['map']] ?? $demo['map'];
+$demoMapName = $demo['map'];
+$mapNameLastSlashIndex = strrpos($demoMapName, '/');
+
+$mapName = $mapNameLastSlashIndex === FALSE ? $demoMapName : substr($demoMapName, $mapNameLastSlashIndex + 1);
+
+$prettyMapName = self::$config['mapNames'][$mapName] ?? $mapName;
 $mapImageFullFileName = sprintf('%s/assets/maps/%s.png', App::$dir, $demo['map']);
 $mapImage = file_exists($mapImageFullFileName) ?
             './assets/maps/' . $demo['map'] . '.png' :
