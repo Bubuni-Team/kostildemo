@@ -6,13 +6,3 @@
     margin-left: 5px;
     margin-top: 4px;
 }
-
-@media (min-width: 900px) {
-    .main-content {
-        height: calc(100vh - 145px);
-    }
-
-    .footer {
-        height: 80px;
-    }
-}
