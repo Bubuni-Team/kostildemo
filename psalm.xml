@@ -16,7 +16,7 @@
     <issueHandlers>
         <UnresolvableInclude>
             <errorLevel type="suppress">
-                <file name="src\App.php"/>
+                <file name="src/App.php"/>
             </errorLevel>
         </UnresolvableInclude>
     </issueHandlers>
