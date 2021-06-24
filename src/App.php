@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 use App\Controller\AbstractController;
 use App\PrintableException;
-use Symfony\Component\VarDumper\VarDumper;
 
 class App
 {
@@ -25,6 +24,8 @@ class App
     protected $responseHttpCode = 200;
     protected $responseContentType = 'text/html';
     protected $responseHeaders = [];
+
+    protected $includePageContainer = true;
 
     public static function run($dir): void
     {
@@ -47,7 +48,7 @@ class App
             $dbConfig['user'],
             $dbConfig['password'],
             [
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
             ]
         );
     }
@@ -74,7 +75,7 @@ class App
 
         try {
             $controller->preAction();
-            $body = $controller->$actionMethod();
+            $body = $this->getFinalResponse($controller->$actionMethod());
             $this->sendResponse($this->responseHttpCode, $body, $this->responseContentType);
         }
         catch (PrintableException $e)
@@ -98,12 +99,10 @@ class App
     /**
      * @param string $templateName
      * @param array $params
-     * @param bool $container
-     * @return false|string
      *
-     * @noinspection PhpUnusedLocalVariableInspection
+     * @return false|string
      */
-    public function renderTemplate(string $templateName, array $params = [], bool $container = false): string
+    public function renderTemplate(string $templateName, array $params = []): string
     {
         $templateFileName = $this->getTemplateFileName($templateName);
         if (!file_exists($templateFileName))
@@ -115,15 +114,20 @@ class App
         extract($params);
         require $templateFileName;
 
-        if ($container)
+        return ob_get_clean();
+    }
+
+    public function getFinalResponse(string $controllerResponse): string
+    {
+        if ($this->responseContentType == 'text/html' && $this->includePageContainer)
         {
-            $pageContent = ob_get_clean();
-            ob_start();
-            $options = self::$config['system'];
-            require_once $this->getTemplateFileName('PAGE_CONTAINER');
+            return $this->renderTemplate('PAGE_CONTAINER', [
+                'pageContent' => $controllerResponse,
+                'options' => self::$config['system']
+            ]);
         }
 
-        return ob_get_clean();
+        return $controllerResponse;
     }
 
     public function getTemplateFileName($templateName): string
