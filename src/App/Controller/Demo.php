@@ -41,6 +41,7 @@ class Demo extends AbstractController
             }
 
             $playerId = $this->getFromRequest('find');
+            // TODO: refactor, we can fetch necessary data directly from DB, w/o filtering
             if ($playerId)
             {
                 $demoList = array_filter($demoList, function ($demo) use ($playerId)

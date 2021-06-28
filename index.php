@@ -31,8 +31,5 @@ if (!in_array('mysql', PDO::getAvailableDrivers()))
 }
 
 $dir = __DIR__;
-
 require_once $dir . '/src/App.php';
-
-$app = new App();
-$app->run($dir);
+App::run($dir);
