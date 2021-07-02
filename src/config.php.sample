@@ -17,12 +17,12 @@ return [
     ],
     'system' => [
         'siteName' => 'Demo system',
-        'key' => 'topsecret',
-        'address' => '127.0.0.1:27015'
+        'url' => 'https://demo.local',
     ],
     'mapNames' => [
         'de_dust2' => 'Dust 2',
         'de_mirage' => 'Mirage',
         'de_inferno' => 'Inferno'
-    ]
+    ],
+    'administrators' => []
 ];

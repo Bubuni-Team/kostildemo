@@ -51,7 +51,7 @@ class Demo extends AbstractController
             }
         }
 
-        return $this->template('demo_index', [
+        return $this->template('demo/index', [
             'secondaryTitle' => 'Demo index',
             'demoList' => $demoList,
             'playerId' => $playerId ?? null

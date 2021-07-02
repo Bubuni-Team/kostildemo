@@ -51,16 +51,6 @@ class App
 
     public function __construct()
     {
-        $dbConfig = self::$config['db'];
-
-        $this->db = new PDO(
-            sprintf('mysql:dbname=%s;host=%s;port=%d', $dbConfig['dbname'], $dbConfig['host'], $dbConfig['port']),
-            $dbConfig['user'],
-            $dbConfig['password'],
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]
-        );
     }
 
     private function handleRequest(): void
@@ -175,9 +165,66 @@ class App
         return $_REQUEST[$key] ?? null;
     }
 
-    public function db(): PDO
+    public function db(): ?PDO
     {
+        // Lazy database connection (for installer).
+        if (!$this->db)
+        {
+            $dbConfig = self::$config['db'];
+
+            $this->db = new PDO(
+                sprintf('mysql:dbname=%s;host=%s;port=%d', $dbConfig['dbname'], $dbConfig['host'], $dbConfig['port']),
+                $dbConfig['user'],
+                $dbConfig['password'],
+                [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+                ]
+            );
+        }
+
         return $this->db;
+    }
+
+    /**
+     * @return string
+     */
+    public function publicUrl(): string
+    {
+        $url = $this->config()['system']['url'] ?? '';
+        if (empty($url))
+        {
+            $urlParts = $_SERVER['HTTP_REFERER'] ? parse_url($_SERVER['HTTP_REFERER']) : [
+                'scheme' => !empty($_SERVER['HTTPS']) ? 'https' : 'http',
+                'host' => $_SERVER['HTTP_HOST'],
+                'path' => $_SERVER['REQUEST_URI']
+            ];
+
+            $url = $this->buildUrl([
+                'scheme' => $urlParts['scheme'],
+                'host' => $urlParts['host'],
+                'path' => $urlParts['path']
+            ]);
+        }
+
+        return $url;
+    }
+
+    /**
+     * @param array $parts
+     * @return string
+     */
+    public function buildUrl(array $parts = []): string
+    {
+        $scheme = isset($parts['scheme']) ? $parts['scheme'] . '://' : '';
+        $host = isset($parts['host']) ? $parts['host'] : '';
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $user = isset($parts['user']) ? $parts['user'] : '';
+        $pass = isset($parts['pass']) ? ':' . $parts['pass']  : '';
+        $pass = ($user || $pass) ? "$pass@" : '';
+        $path = isset($parts['path']) ? $parts['path'] : '';
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+        return "$scheme$user$pass$host$port$path$query$fragment";
     }
 
     public function config(): array

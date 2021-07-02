@@ -66,4 +66,52 @@ class AbstractController
     {
         $this->app()->setHeader($name, $value);
     }
+
+    /**
+     * @throws PrintableException
+     */
+    protected function assertIsAdmin(): void
+    {
+        if ($this->isAdmin())
+        {
+            return;
+        }
+
+        $status = 403;
+        if ($this->loggedUser() === -1)
+        {
+            $this->setHeader('Location', $this->app->buildUrl([
+                'path' => './',
+                'query' => http_build_query([
+                    'controller' => 'account',
+                    'action' => 'login'
+                ])
+            ]));
+            $status = 302;
+        }
+
+        throw $this->exception('You don\'t have permissions to do that', $status);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isAdmin()
+    {
+        $administrators = $this->app->config()['system']['administrators'] ?? [];
+        return in_array($this->loggedUser(), $administrators);
+    }
+
+    /**
+     * @return int
+     */
+    protected function loggedUser()
+    {
+        if (@session_status() !== PHP_SESSION_ACTIVE)
+        {
+            @session_start();
+        }
+
+        return $_SESSION['steam_id'] ?? -1;
+    }
 }
