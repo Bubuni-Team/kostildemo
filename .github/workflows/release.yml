@@ -51,7 +51,7 @@ jobs:
     
     - name: Create checksum
       run: |
-        sha256sum release.tar.gz > checksum.txt
+        sha256sum release-${GITHUB_REF}-${GITHUB_SHA::7}.tar.gz > checksum.txt
     
     - name: Create Release
       id: create_release
