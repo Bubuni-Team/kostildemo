@@ -45,7 +45,8 @@ jobs:
     
     - name: Create release archive
       run: |
-        rm -rf composer.json composer.lock
+        rm -rf composer.json composer.lock psalm.xml
+        cp src/.htaccess vendor/.htaccess
         tar -czf release.tar.gz *
     
     - name: Create checksum
