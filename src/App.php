@@ -221,6 +221,48 @@ class App
         return $this->db;
     }
 
+    /**
+     * @return string
+     */
+    public function publicUrl(): string
+    {
+        $url = $this->config()['system']['url'] ?? '';
+        if (empty($url))
+        {
+            $urlParts = $_SERVER['HTTP_REFERER'] ? parse_url($_SERVER['HTTP_REFERER']) : [
+                'scheme' => !empty($_SERVER['HTTPS']) ? 'https' : 'http',
+                'host' => $_SERVER['HTTP_HOST'],
+                'path' => $_SERVER['REQUEST_URI']
+            ];
+
+            $url = $this->buildUrl([
+                'scheme' => $urlParts['scheme'] ?? '',
+                'host' => $urlParts['host'] ?? '',
+                'path' => $urlParts['path'] ?? ''
+            ]);
+        }
+
+        return $url;
+    }
+
+    /**
+     * @param array $parts
+     * @return string
+     */
+    public function buildUrl(array $parts = []): string
+    {
+        $scheme = isset($parts['scheme']) ? $parts['scheme'] . '://' : '';
+        $host = isset($parts['host']) ? $parts['host'] : '';
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $user = isset($parts['user']) ? $parts['user'] : '';
+        $pass = isset($parts['pass']) ? ':' . $parts['pass']  : '';
+        $pass = ($user || $pass) ? "$pass@" : '';
+        $path = isset($parts['path']) ? $parts['path'] : '';
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+        return "$scheme$user$pass$host$port$path$query$fragment";
+    }
+
     public function config(): array
     {
         return self::$config;
