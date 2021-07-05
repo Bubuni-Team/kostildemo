@@ -53,7 +53,7 @@ class Api extends AbstractController
             throw $this->exception('Required parameter is missing.', 400);
         }
 
-        $chunkDirectory = $this->getChunkDirByDemoId($demoId);
+        $chunkDirectory = \App\Util\Demo::getChunkDirByDemoId($demoId);
         if (!file_exists($chunkDirectory))
         {
             mkdir($chunkDirectory, 0777, true);
@@ -87,11 +87,11 @@ class Api extends AbstractController
         }
         $demoId = $demoData['unique_id'];
 
-        $chunkDir = $this->getChunkDirByDemoId($demoId);
+        $chunkDir = \App\Util\Demo::getChunkDirByDemoId($demoId);
         $chunkList = array_diff(scandir($chunkDir), ['.', '..']);
         sort($chunkList);
 
-        $demoFd = fopen($this->getDemoFileNameByDemoId($demoId), 'wb');
+        $demoFd = fopen(\App\Util\Demo::getDemoFileNameByDemoId($demoId), 'wb');
         try
         {
             foreach ($chunkList as $chunkName)
@@ -231,15 +231,5 @@ class Api extends AbstractController
         }
 
         return null;
-    }
-
-    protected function getChunkDirByDemoId(string $demoId): string
-    {
-        return sprintf('%s/data/chunks/%s', App::$dir, $demoId);
-    }
-
-    protected function getDemoFileNameByDemoId(string $demoId): string
-    {
-        return sprintf('%s/data/demos/%s.dem', App::$dir, $demoId);
     }
 }

@@ -16,7 +16,9 @@ return [
         'dbname' => 'kostildemo'
     ],
     'system' => [
-        'siteName' => 'Demo system'
+        'siteName' => 'Demo system',
+        'cleanupCutOff' => 172800,
+        'cleanupCooldown' => 7200
     ],
     'servers' => [
         1 => [
