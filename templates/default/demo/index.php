@@ -4,7 +4,7 @@
             Пока что здесь нет демо-записей
         <?php else: ?>
             <?php foreach ($demoList as $demo): ?>
-                <?= $this->renderTemplate('demo_entry', [
+                <?= $this->renderTemplate('demo/entry', [
                         'demo' => $demo,
                         'server' => self::$config['servers'][(int) $demo['server_id']],
                         'playerId' => $playerId

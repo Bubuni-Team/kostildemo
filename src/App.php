@@ -38,6 +38,9 @@ class App
     /** @var bool */
     protected $includePageContainer = true;
 
+    /** @var array  */
+    protected $templateFileNameCache = [];
+
     public static function run(string $dir): void
     {
         self::$dir = $dir;
@@ -141,7 +144,31 @@ class App
 
     public function getTemplateFileName(string $templateName): string
     {
-        return self::$dir . '/templates/' . $templateName . '.php';
+        $templateFileName = $this->templateFileNameCache[$templateName] ?? null;
+        if (!$templateFileName)
+        {
+            $styleName = self::$config['system']['style'] ?? 'default';
+            $templateFileName = $this->formatTemplateFileName($styleName, $templateName);
+            if (!file_exists($templateFileName))
+            {
+                // fallback
+                $templateFileName = $this->formatTemplateFileName('default', $templateName);
+            }
+
+            $this->templateFileNameCache[$templateName] = $templateFileName;
+        }
+
+        return $templateFileName;
+
+    }
+    public function formatTemplateFileName(string $styleName, string $templateName): string
+    {
+        return sprintf(
+            '%s/templates/%s/%s.php',
+            self::$dir,
+            $styleName,
+            $templateName
+        );
     }
 
     public function sendNotFound(): void
