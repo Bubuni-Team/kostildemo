@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 use App\Controller\AbstractController;
 use App\PrintableException;
+use Symfony\Component\VarDumper\VarDumper;
 
 class App
 {
@@ -41,15 +42,23 @@ class App
     /** @var array  */
     protected $templateFileNameCache = [];
 
-    public static function run(string $dir): void
+    /** @var array  */
+    protected $dataRegistry = [];
+
+    public static function setup(string $dir): App
     {
         self::$dir = $dir;
         self::$config = require_once self::$dir . '/src/config.php';
         require_once $dir . '/vendor/autoload.php';
 
-        self::$app = new App();
+        ignore_user_abort(true);
+        @ini_set('output_buffering', '0');
 
-        self::$app->handleRequest();
+        self::$app = $app = new App;
+
+        $app->loadDataRegistry();
+
+        return $app;
     }
 
     public function __construct()
@@ -64,6 +73,11 @@ class App
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
             ]
         );
+    }
+
+    public function run(): void
+    {
+        $this->handleRequest();
     }
 
     private function handleRequest(): void
@@ -210,5 +224,25 @@ class App
     public function config(): array
     {
         return self::$config;
+    }
+
+    public function dataRegistry(): array
+    {
+        return $this->dataRegistry;
+    }
+
+    public static function dump($var): void
+    {
+        VarDumper::dump($var);
+    }
+
+    protected function loadDataRegistry(): void
+    {
+        $db = $this->db();
+        $dr = $db->query("SELECT * FROM `data_registry`", PDO::FETCH_ASSOC)->fetchAll();
+        foreach ($dr as $data)
+        {
+            $this->dataRegistry[$data['data_key']] = json_decode($data['data_value'], true);
+        }
     }
 }

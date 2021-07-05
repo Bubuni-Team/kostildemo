@@ -16,6 +16,7 @@
         }
     },
     "require-dev": {
-        "vimeo/psalm": "^4.8"
+        "vimeo/psalm": "^4.8",
+        "symfony/var-dumper": "^5.3"
     }
 }
