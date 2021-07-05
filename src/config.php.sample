@@ -16,9 +16,14 @@ return [
         'dbname' => 'kostildemo'
     ],
     'system' => [
-        'siteName' => 'Demo system',
-        'key' => 'topsecret',
-        'address' => '127.0.0.1:27015'
+        'siteName' => 'Demo system'
+    ],
+    'servers' => [
+        1 => [
+            'name' => 'Your server name',
+            'key' => 'changeme',
+            'address' => '127.0.0.1:27015'
+        ]
     ],
     'mapNames' => [
         'de_dust2' => 'Dust 2',
