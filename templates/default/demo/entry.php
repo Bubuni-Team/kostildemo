@@ -17,7 +17,7 @@ $mapName = $mapNameLastSlashIndex === FALSE ? $demoMapName : substr($demoMapName
 $prettyMapName = self::$config['mapNames'][$mapName] ?? $mapName;
 $mapImageFullFileName = sprintf('%s/assets/maps/%s.png', App::$dir, $demo['map']);
 $mapImage = file_exists($mapImageFullFileName) ?
-            './assets/maps/' . $demo['map'] . '.png' :
+            './assets/maps/' . $mapName . '.png' :
             './assets/maps/nomap.png';
 
 $playerIds = ',' . implode(',', array_keys($demo['players'])) . ',';
