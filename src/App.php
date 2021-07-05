@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 
 use App\Controller\AbstractController;
+use App\DataRegistry;
 use App\PrintableException;
 use Symfony\Component\VarDumper\VarDumper;
 
@@ -42,8 +43,11 @@ class App
     /** @var array  */
     protected $templateFileNameCache = [];
 
-    /** @var array  */
-    protected $dataRegistry = [];
+    /** @var DataRegistry  */
+    protected $dataRegistry;
+
+    /** @var bool */
+    protected $runCleanup = false;
 
     public static function setup(string $dir): App
     {
@@ -54,17 +58,12 @@ class App
         ignore_user_abort(true);
         @ini_set('output_buffering', '0');
 
-        self::$app = $app = new App;
-
-        $app->loadDataRegistry();
-
-        return $app;
+        return self::$app = new App();
     }
 
     public function __construct()
     {
         $dbConfig = self::$config['db'];
-
         $this->db = new PDO(
             sprintf('mysql:dbname=%s;host=%s;port=%d', $dbConfig['dbname'], $dbConfig['host'], $dbConfig['port']),
             $dbConfig['user'],
@@ -73,18 +72,24 @@ class App
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
             ]
         );
+
+        $this->dataRegistry = new DataRegistry($this);
     }
 
     public function run(): void
     {
+        if (time() > $this->dataRegistry()['cleanupRunTime'] && !$this->isCleanupRequest())
+        {
+            $this->dataRegistry['cleanupRunHash'] = sha1(uniqid());
+            $this->runCleanup = true;
+        }
+
         $this->handleRequest();
     }
 
     private function handleRequest(): void
     {
-        $controllerName = $this->getFromRequest('controller') ?: 'demo';
-        $controllerClass = 'App\Controller\\' . ucfirst(strtolower($controllerName));
-
+        $controllerClass = 'App\Controller\\' . $this->getControllerName();
         if (!class_exists($controllerClass))
         {
             $this->sendNotFound();
@@ -92,8 +97,7 @@ class App
 
         /** @var AbstractController $controller */
         $controller = new $controllerClass(self::$app);
-        $actionName = $this->getFromRequest('action') ?: 'index';
-        $actionMethod = 'action' . ucfirst(strtolower($actionName));
+        $actionMethod = 'action' . $this->getActionName();
 
         if (!is_callable([$controller, $actionMethod]))
         {
@@ -216,6 +220,24 @@ class App
         return $_REQUEST[$key] ?? null;
     }
 
+    public function isCleanupRequest(): bool
+    {
+        return $this->getControllerName() == 'Demo'
+            && $this->getActionName() == 'Cleanup';
+    }
+
+    public function getControllerName(): string
+    {
+        $controllerName = $this->getFromRequest('controller') ?: 'demo';
+        return ucfirst(strtolower($controllerName));
+    }
+
+    public function getActionName(): string
+    {
+        $actionName = $this->getFromRequest('action') ?: 'index';
+        return ucfirst(strtolower($actionName));
+    }
+
     public function db(): PDO
     {
         return $this->db;
@@ -268,7 +290,7 @@ class App
         return self::$config;
     }
 
-    public function dataRegistry(): array
+    public function dataRegistry(): DataRegistry
     {
         return $this->dataRegistry;
     }
@@ -279,15 +301,5 @@ class App
     public static function dump($var): void
     {
         VarDumper::dump($var);
-    }
-
-    protected function loadDataRegistry(): void
-    {
-        $db = $this->db();
-        $dr = $db->query("SELECT * FROM `data_registry`", PDO::FETCH_ASSOC)->fetchAll();
-        foreach ($dr as $data)
-        {
-            $this->dataRegistry[$data['data_key']] = json_decode($data['data_value'], true);
-        }
     }
 }
