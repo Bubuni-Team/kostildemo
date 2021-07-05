@@ -15,7 +15,7 @@ $mapNameLastSlashIndex = strrpos($demoMapName, '/');
 $mapName = $mapNameLastSlashIndex === FALSE ? $demoMapName : substr($demoMapName, $mapNameLastSlashIndex + 1);
 
 $prettyMapName = self::$config['mapNames'][$mapName] ?? $mapName;
-$mapImageFullFileName = sprintf('%s/assets/maps/%s.png', App::$dir, $demo['map']);
+$mapImageFullFileName = sprintf('%s/assets/maps/%s.png', App::$dir, $mapName);
 $mapImage = file_exists($mapImageFullFileName) ?
             './assets/maps/' . $mapName . '.png' :
             './assets/maps/nomap.png';
