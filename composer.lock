@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fcfc61e186cd214afc6e81aa8fc8f2e7",
+    "content-hash": "cdc6abdc40e987f862260c32812cfaf3",
     "packages": [
         {
             "name": "iignatov/lightopenid",
