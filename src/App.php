@@ -231,6 +231,9 @@ class App
         return $this->dataRegistry;
     }
 
+    /**
+     * @psalm-suppress UndefinedClass
+     */
     public static function dump($var): void
     {
         VarDumper::dump($var);
