@@ -5,7 +5,6 @@
  * @noinspection PhpUnhandledExceptionInspection
  */
 
-$demo['uploaded_at'] = "@{$demo['uploaded_at']}";
 $demo['started_at'] = "@{$demo['started_at']}";
 $demo['finished_at'] = "@{$demo['finished_at']}";
 
@@ -77,7 +76,7 @@ $playerIds = ',' . implode(',', array_keys($demo['players'])) . ',';
                 </div>
                 <div class="level-item demoRecordedAt">
                     <span class="icon is-small"><ion-icon name="calendar-outline"></ion-icon></span>
-                    <?= (new DateTime($demo['uploaded_at']))->format('d.m H:i') ?>
+                    <?= date('d.m H:i', $demo['uploaded_at']) ?>
                 </div>
             </div>
         </nav>

@@ -52,11 +52,12 @@ class App
     public static function setup(string $dir): App
     {
         self::$dir = $dir;
-        self::$config = require_once self::$dir . '/src/config.php';
+        self::$config = $config = require_once self::$dir . '/src/config.php';
         require_once $dir . '/vendor/autoload.php';
 
         ignore_user_abort(true);
         @ini_set('output_buffering', '0');
+        date_default_timezone_set($config['system']['timezone'] ?? '');
 
         return self::$app = new App();
     }
