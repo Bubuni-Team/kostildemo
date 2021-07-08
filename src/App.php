@@ -10,7 +10,9 @@ declare(strict_types=1);
 
 
 use App\Controller\AbstractController;
+use App\DataRegistry;
 use App\PrintableException;
+use Symfony\Component\VarDumper\VarDumper;
 
 class App
 {
@@ -38,26 +40,57 @@ class App
     /** @var bool */
     protected $includePageContainer = true;
 
-    public static function run(string $dir): void
+    /** @var array  */
+    protected $templateFileNameCache = [];
+
+    /** @var DataRegistry  */
+    protected $dataRegistry;
+
+    /** @var bool */
+    protected $runCleanup = false;
+
+    public static function setup(string $dir): App
     {
         self::$dir = $dir;
-        self::$config = require_once self::$dir . '/src/config.php';
+        self::$config = $config = require_once self::$dir . '/src/config.php';
         require_once $dir . '/vendor/autoload.php';
 
-        self::$app = new App();
+        ignore_user_abort(true);
+        @ini_set('output_buffering', '0');
+        date_default_timezone_set($config['system']['timezone'] ?? '');
 
-        self::$app->handleRequest();
+        return self::$app = new App();
     }
 
     public function __construct()
     {
+        $dbConfig = self::$config['db'];
+        $this->db = new PDO(
+            sprintf('mysql:dbname=%s;host=%s;port=%d', $dbConfig['dbname'], $dbConfig['host'], $dbConfig['port']),
+            $dbConfig['user'],
+            $dbConfig['password'],
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]
+        );
+
+        $this->dataRegistry = new DataRegistry($this);
+    }
+
+    public function run(): void
+    {
+        if (time() > $this->dataRegistry()['cleanupRunTime'] && !$this->isCleanupRequest())
+        {
+            $this->dataRegistry['cleanupRunHash'] = sha1(uniqid());
+            $this->runCleanup = true;
+        }
+
+        $this->handleRequest();
     }
 
     private function handleRequest(): void
     {
-        $controllerName = $this->getFromRequest('controller') ?: 'demo';
-        $controllerClass = 'App\Controller\\' . ucfirst(strtolower($controllerName));
-
+        $controllerClass = 'App\Controller\\' . $this->getControllerName();
         if (!class_exists($controllerClass))
         {
             $this->sendNotFound();
@@ -65,8 +98,7 @@ class App
 
         /** @var AbstractController $controller */
         $controller = new $controllerClass(self::$app);
-        $actionName = $this->getFromRequest('action') ?: 'index';
-        $actionMethod = 'action' . ucfirst(strtolower($actionName));
+        $actionMethod = 'action' . $this->getActionName();
 
         if (!is_callable([$controller, $actionMethod]))
         {
@@ -131,7 +163,31 @@ class App
 
     public function getTemplateFileName(string $templateName): string
     {
-        return self::$dir . '/templates/' . $templateName . '.php';
+        $templateFileName = $this->templateFileNameCache[$templateName] ?? null;
+        if (!$templateFileName)
+        {
+            $styleName = self::$config['system']['style'] ?? 'default';
+            $templateFileName = $this->formatTemplateFileName($styleName, $templateName);
+            if (!file_exists($templateFileName))
+            {
+                // fallback
+                $templateFileName = $this->formatTemplateFileName('default', $templateName);
+            }
+
+            $this->templateFileNameCache[$templateName] = $templateFileName;
+        }
+
+        return $templateFileName;
+
+    }
+    public function formatTemplateFileName(string $styleName, string $templateName): string
+    {
+        return sprintf(
+            '%s/templates/%s/%s.php',
+            self::$dir,
+            $styleName,
+            $templateName
+        );
     }
 
     public function sendNotFound(): void
@@ -165,23 +221,26 @@ class App
         return $_REQUEST[$key] ?? null;
     }
 
-    public function db(): ?PDO
+    public function isCleanupRequest(): bool
     {
-        // Lazy database connection (for installer).
-        if (!$this->db)
-        {
-            $dbConfig = self::$config['db'];
+        return $this->getControllerName() == 'Demo'
+            && $this->getActionName() == 'Cleanup';
+    }
 
-            $this->db = new PDO(
-                sprintf('mysql:dbname=%s;host=%s;port=%d', $dbConfig['dbname'], $dbConfig['host'], $dbConfig['port']),
-                $dbConfig['user'],
-                $dbConfig['password'],
-                [
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
-                ]
-            );
-        }
+    public function getControllerName(): string
+    {
+        $controllerName = $this->getFromRequest('controller') ?: 'demo';
+        return ucfirst(strtolower($controllerName));
+    }
 
+    public function getActionName(): string
+    {
+        $actionName = $this->getFromRequest('action') ?: 'index';
+        return ucfirst(strtolower($actionName));
+    }
+
+    public function db(): PDO
+    {
         return $this->db;
     }
 
@@ -200,9 +259,9 @@ class App
             ];
 
             $url = $this->buildUrl([
-                'scheme' => $urlParts['scheme'],
-                'host' => $urlParts['host'],
-                'path' => $urlParts['path']
+                'scheme' => $urlParts['scheme'] ?? '',
+                'host' => $urlParts['host'] ?? '',
+                'path' => $urlParts['path'] ?? ''
             ]);
         }
 
@@ -230,5 +289,18 @@ class App
     public function config(): array
     {
         return self::$config;
+    }
+
+    public function dataRegistry(): DataRegistry
+    {
+        return $this->dataRegistry;
+    }
+
+    /**
+     * @psalm-suppress UndefinedClass
+     */
+    public static function dump($var): void
+    {
+        VarDumper::dump($var);
     }
 }

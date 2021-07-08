@@ -1,25 +1,23 @@
 <?php
-/** @noinspection PhpUnused */
 declare(strict_types=1);
 
 namespace App\Controller;
 
 
 use Kruzya\SteamIdConverter\SteamID;
+use LightOpenID;
 
 class Account extends AbstractController
 {
     public function preAction(): void
     {
-        @session_start();
-
         $this->setHttpCode(302);
         $this->setHeader('Location', './');
     }
 
     public function actionLogin(): string
     {
-        $lightOpenId = new \LightOpenID($this->app()->publicUrl());
+        $lightOpenId = new LightOpenID($this->app()->publicUrl());
         $lightOpenId->identity = 'https://steamcommunity.com/openid';
 
         if (!$lightOpenId->mode)
@@ -33,7 +31,7 @@ class Account extends AbstractController
 
             if (!empty($matches[1]))
             {
-                $_SESSION['steam_id'] = (new SteamID($matches[1]))->accountId();
+                @setcookie('steam_id', (string) (new SteamID($matches[1]))->accountId(), time() + (86400 * 7));
             }
         }
 
@@ -42,9 +40,9 @@ class Account extends AbstractController
 
     public function actionLogout(): string
     {
-        if (array_key_exists('steam_id', $_SESSION))
+        if (array_key_exists('steam_id', $_COOKIE))
         {
-            unset($_SESSION['steam_id']);
+            @setcookie('steam_id', '', time() - 1);
         }
 
         return '';

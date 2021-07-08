@@ -32,4 +32,4 @@ if (!in_array('mysql', PDO::getAvailableDrivers()))
 
 $dir = __DIR__;
 require_once $dir . '/src/App.php';
-App::run($dir);
+App::setup($dir)->run();

@@ -3,3 +3,5 @@ src/config.php
 data/chunks/*
 data/demos/
 !data/chunks/.htaccess
+templates/*
+!templates/default/

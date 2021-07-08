@@ -36,5 +36,8 @@
         </p>
     </div>
 </footer>
+<?php if ($this->runCleanup): ?>
+    <script src="?controller=demo&action=cleanup&hash=<?= $this->dataRegistry['cleanupRunHash'] ?>" async></script>
+<?php endif; ?>
 </body>
 </html>
