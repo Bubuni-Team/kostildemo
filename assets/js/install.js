@@ -3,13 +3,10 @@
  *
  * Purpose: performs a frontend logic for setup process.
  */
-(function(window, document)
-{
-    document.addEventListener('DOMContentLoaded', function()
-    {
+(function (window, document) {
+    document.addEventListener('DOMContentLoaded', function () {
         const httpUrl = document.documentElement.dataset.publicUrl;
-        const post = function (content)
-        {
+        const post = function (content) {
             return fetch(httpUrl + '?controller=install', {
                 method: 'POST',
                 body: JSON.stringify(content),
@@ -20,19 +17,15 @@
         };
 
         const random = {
-            int: function (min, max)
-            {
+            int: function (min, max) {
                 return min + Math.floor(Math.random() * (max - min));
             },
 
-            key: function (length)
-            {
+            key: function (length = 32) {
                 let key = '';
                 let min = 0, max = 0;
-                for (let i = 0; i < length; ++i)
-                {
-                    switch (this.int(0, 2))
-                    {
+                for (let i = 0; i < length; ++i) {
+                    switch (this.int(0, 2)) {
                         case 0: // integer
                             min = 48;
                             max = 57;
@@ -55,7 +48,7 @@
         };
 
         const mapPresets = JSON.parse(document.querySelector('#game-presets').innerHTML);
-        (window.initializeTemplateRelatedComponents || function() {})();
+        (window.initializeTemplateRelatedComponents || function () { })();
 
         window.vue = new Vue({
             el: '#install-root',
@@ -82,18 +75,13 @@
                     mapPresets: []
                 },
 
-                servers: {
-                    '1': {
+                servers: [
+                    {
                         name: '',
-                        key: random.key(32),
-                        address: ''
-                    },
-                    '2': {
-                        name: '',
-                        key: random.key(32),
-                        address: ''
+                        address: '',
+                        key: random.key(32)
                     }
-                },
+                ],
 
                 mapDict: [
                     {
@@ -113,26 +101,24 @@
             },
 
             methods: {
-                checkDatabaseCredentials()
-                {
-                    if (!this.db.host.length || !this.db.user.length || !this.db.dbname.length)
-                    {
+                checkDatabaseCredentials() {
+                    if (!this.db.host.length || !this.db.user.length || !this.db.dbname.length) {
                         return;
                     }
 
                     post({
                         command: 'verify_database_credentials',
                         credentials: this.db
-                    }).then(response => response.json()).then(response => {
-                        this.db.isSuccess = response.success;
-                        this.db.errorMessage = response.user_friendly_msg;
-                    });
+                    })
+                        .then(response => response.json())
+                        .then(response => {
+                            this.db.isSuccess = response.success;
+                            this.db.errorMessage = response.user_friendly_msg;
+                        });
                 },
 
-                install()
-                {
-                    if (!this.db.isSuccess)
-                    {
+                install() {
+                    if (!this.db.isSuccess) {
                         return;
                     }
 
@@ -147,8 +133,7 @@
                             kv.title = kv.title.trim();
                             kv.name = kv.name.trim();
 
-                            if (kv.title.length && kv.name.length)
-                            {
+                            if (kv.title.length && kv.name.length) {
                                 map[kv.name] = kv.title;
                             }
 
@@ -174,56 +159,42 @@
 
                 // These methods is developed by Black_Yuzia.
                 // Thanks for help, keyed faggot :3
-                createItem(array, keyFields)
-                {
-                    const obj = {};
-                    for (let field of keyFields)
-                    {
-                        obj[field] = '';
-                    }
-
-                    array.push(obj);
+                createItem(array, object) {
+                    array.push(object);
                 },
-                deleteItem(array, index)
-                {
+                deleteItem(array, index) {
                     array.splice(index, 1)
                 },
-                checkFields(array, currentItemIndex, keyFields = [], includeValueKey = true)
-                {
-                    const currentItem = array[currentItemIndex];
+                checkFields(array, currentItemIndex, keyFields = {}, includeValueKey = true, excludeKeys = []) {
+                    const currentItem = array[currentItemIndex] || {};
                     const latestItemIndex = array.length - 1;
 
-                    const keyFieldsForValidating = keyFields;
-                    if (includeValueKey)
-                    {
-                        keyFieldsForValidating.push('value');
+                    if (includeValueKey) {
+                        keyFields["value"] = "";
                     }
 
+                    const keyFieldsForValidating = Object.keys(keyFields);
+
                     let isFilled = false;
-                    for (let keyField of keyFieldsForValidating)
-                    {
+                    for (let keyField of keyFieldsForValidating) {
+                        if (excludeKeys.includes(keyField)) continue;
                         isFilled = isFilled || currentItem[keyField];
                     }
 
-                    if (currentItemIndex !== latestItemIndex)
-                    {
+                    if (currentItemIndex !== latestItemIndex) {
                         if (!isFilled && array.length > 1) this.deleteItem(array, currentItemIndex);
                     }
-                    else
-                    {
-                        const latestItem = array[latestItemIndex];
-                        if (isFilled) this.createItem(array, keyFieldsForValidating)
+                    else {
+                        if (isFilled) this.createItem(array, keyFields)
                         else if (array.length > 1) this.deleteItem(array, latestItemIndex)
                     }
                 },
 
-                intRandom(min, max)
-                {
+                intRandom(min, max) {
                     return random.int(min, max);
                 },
 
-                generateKey(length)
-                {
+                generateKey(length) {
                     return random.key(length);
                 }
             }
