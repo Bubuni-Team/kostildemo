@@ -29,7 +29,12 @@ CREATE TABLE `record_player` (
 )
 COLLATE='utf8_general_ci'
 ENGINE=InnoDB;
-        "];
+        ", "CREATE TABLE IF NOT EXISTS `data_registry` (
+  `data_key` varchar(32) NOT NULL,
+  `data_value` mediumblob NOT NULL,
+  PRIMARY KEY (`data_key`),
+  UNIQUE KEY `data_registry_data_key_uindex` (`data_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;"];
 
     protected $downQueries = [
         "DROP TABLE `record_player`;",

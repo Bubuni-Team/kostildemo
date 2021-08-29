@@ -24,7 +24,10 @@ class AbstractController
         $this->app = $app;
     }
 
-    public function preAction(): void {}
+    public function preAction(): void
+    {
+        date_default_timezone_set($this->app->config()['system']['timezone'] ?? 'Europe/Moscow');
+    }
 
     protected function app(): App
     {
@@ -81,7 +84,6 @@ class AbstractController
         if ($this->loggedUser() === -1)
         {
             $this->setHeader('Location', $this->app->buildUrl([
-                'path' => './',
                 'query' => http_build_query([
                     'controller' => 'account',
                     'action' => 'login'
@@ -113,5 +115,20 @@ class AbstractController
         }
 
         return $_SESSION['steam_id'] ?? -1;
+    }
+
+    /**
+     * @param string $method
+     * @return bool
+     */
+    protected function isHttpMethod(string $method): bool
+    {
+        return strtolower($method) === strtolower($_SERVER['REQUEST_METHOD']);
+    }
+
+    public function forbidden(): string
+    {
+        $this->setHttpCode(403);
+        return $this->template('pages/forbidden');
     }
 }

@@ -10,7 +10,8 @@
         "ext-pdo": "*",
         "ext-pdo_mysql": "*",
         "ext-json": "*",
-        "kruzya/steam-id-converter": "^1.0"
+        "kruzya/steam-id-converter": "^1.0",
+        "pimple/pimple": "^3.0"
     },
     "repositories": [
         {

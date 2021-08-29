@@ -13,6 +13,12 @@ class Account extends AbstractController
     {
         $this->setHttpCode(302);
         $this->setHeader('Location', './');
+
+        $redirectTo = $this->getFromRequest('__redirect_to');
+        if ($redirectTo)
+        {
+            $_SESSION['after_account_op_goto'] = $redirectTo;
+        }
     }
 
     public function actionLogin(): string
@@ -31,8 +37,10 @@ class Account extends AbstractController
 
             if (!empty($matches[1]))
             {
-                @setcookie('steam_id', (string) (new SteamID($matches[1]))->accountId(), time() + (86400 * 7));
+                $_SESSION['steam_id'] = (new SteamID($matches[1]))->accountId();
             }
+
+            $this->rewriteReturnUrlIfSet();
         }
 
         return '';
@@ -40,11 +48,23 @@ class Account extends AbstractController
 
     public function actionLogout(): string
     {
-        if (array_key_exists('steam_id', $_COOKIE))
+        if (array_key_exists('steam_id', $_SESSION))
         {
-            @setcookie('steam_id', '', time() - 1);
+            unset($_SESSION['steam_id']);
         }
 
+        $this->rewriteReturnUrlIfSet();
         return '';
+    }
+
+    protected function rewriteReturnUrlIfSet(): void
+    {
+        $returnUrl = $_SESSION['after_account_op_goto'] ?? '';
+        if (empty($returnUrl))
+        {
+            return;
+        }
+
+        $this->setHeader('Location', $returnUrl);
     }
 }
