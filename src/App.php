@@ -10,23 +10,24 @@ declare(strict_types=1);
 
 
 use App\Controller\AbstractController;
+use App\Cookie\CookieManager;
+use App\CookieSession;
+use App\Data\InstallMapName;
 use App\DataRegistry;
 use App\PrintableException;
+use Pimple\Container;
 use Symfony\Component\VarDumper\VarDumper;
 
 class App
 {
+    /** @var Container */
+    protected $container;
+
     /** @var string */
     public static $dir;
 
     /** @var App|null */
     protected static $app = null;
-
-    /** @var array */
-    protected static $config = [];
-
-    /** @var PDO */
-    protected $db;
 
     /** @var int */
     protected $responseHttpCode = 200;
@@ -43,49 +44,172 @@ class App
     /** @var array  */
     protected $templateFileNameCache = [];
 
-    /** @var DataRegistry  */
-    protected $dataRegistry;
-
     /** @var bool */
     protected $runCleanup = false;
 
     public static function setup(string $dir): App
     {
-        self::$dir = $dir;
-        self::$config = $config = require_once self::$dir . '/src/config.php';
         require_once $dir . '/vendor/autoload.php';
+
+        self::$dir = $dir;
+        $app = new App();
 
         ignore_user_abort(true);
         @ini_set('output_buffering', '0');
-        date_default_timezone_set($config['system']['timezone'] ?? '');
+        date_default_timezone_set($app->config()['system']['timezone'] ?? 'Europe/Moscow');
 
-        return self::$app = new App();
+        return self::$app = $app;
     }
 
     public function __construct()
     {
-        $dbConfig = self::$config['db'];
-        $this->db = new PDO(
-            sprintf('mysql:dbname=%s;host=%s;port=%d', $dbConfig['dbname'], $dbConfig['host'], $dbConfig['port']),
-            $dbConfig['user'],
-            $dbConfig['password'],
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]
-        );
+        $container = new Pimple\Container();
+        $this->container = $container;
+        $app = $this;
 
-        $this->dataRegistry = new DataRegistry($this);
+        $container['page_container.vars'] = function (Container $c): ArrayAccess
+        {
+            return new \ArrayObject($c['page_container.init_vars'],
+                ArrayObject::ARRAY_AS_PROPS|ArrayObject::STD_PROP_LIST);
+        };
+        $container['page_container.init_vars'] = function (Container $c) use ($app): array
+        {
+            $additional = [
+                'dataRegistry' => $app->isInstalled() ? $c['registry'] : new ArrayObject()
+            ];
+
+            return array_merge([
+                'config' => $c['config'],
+                'headAdditionalCode' => [],
+                'secondaryTitle' => ''
+            ], $additional);
+        };
+
+        $container['config.default'] = function (): array
+        {
+            return [
+                'db' => [
+                    'host' => 'localhost', // 'database.local',
+                    'port' => 3306,
+                    'user' => 'autodemo',
+                    'password' => 'autodemo',
+                    'dbname' => 'autodemo'
+                ],
+                'system' => [
+                    'cleanupCutOff' => 172800,
+                    'cleanupCooldown' => 7200,
+                    'chunkSize' => 'auto',
+                    'configurePhpReporting' => true,
+
+                    'siteName' => 'Demo System bu Bubuni Team',
+                    'triggerBasedCron' => true,
+                    'cronKey' => ''
+                ],
+
+                'cookie' => [
+                    'prefix' => 'kostildemo_',
+                    'path' => '/',
+                    'domain' => ''
+                ],
+
+                'servers' => [],
+                'mapNames' => []
+            ];
+        };
+        $container['config'] = function (Container $c): array
+        {
+            $path = App::$dir . '/src/config.php';
+            $data = $c['config.default'];
+
+            $data['config_exists'] = false;
+            if (file_exists($path))
+            {
+                $data = array_merge($data, require($path));
+                $data['config_exists'] = true;
+            }
+
+            return $data;
+        };
+
+        $container['db'] = function (Container $c): PDO
+        {
+            $config = $c['config']['db'];
+
+            return new PDO(
+                sprintf('mysql:dbname=%s;host=%s;port=%d', $config['dbname'], $config['host'], $config['port']),
+                $config['user'],
+                $config['password'],
+
+                array_merge([
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                ], $config['pdo_options'] ?? [])
+            );
+        };
+        $container['cookieManager'] = function (Container $c): CookieManager
+        {
+            $config = $c['config']['cookie'];
+            return new CookieManager($config['prefix'], $config['path'], $config['domain'],
+                $_COOKIE);
+        };
+        $container['registry'] = function () use ($app): DataRegistry
+        {
+            return new DataRegistry($app);
+        };
+
+        $container['mapNameDictionary'] = function (Container $c): array
+        {
+            $config = $c['config'];
+
+            $presets = $config['system']['mapPresets'];
+            $mapNames = $config['mapNames'];
+
+            // First, we write own map names to array.
+            $result = [];
+            foreach ($presets as $presetName)
+            {
+                $content = InstallMapName::getDictionaryContent($presetName)['content'];
+                if (empty($content))
+                {
+                    continue;
+                }
+
+                $result = array_merge($result, $content['content']);
+            }
+
+            // And finally we override all own map names - with user definitions and append them.
+            return array_merge($result, $mapNames);
+        };
     }
 
     public function run(): void
     {
-        if (time() > $this->dataRegistry()['cleanupRunTime'] && !$this->isCleanupRequest())
+        if ($this->isInstalled())
         {
-            $this->dataRegistry['cleanupRunHash'] = sha1(uniqid());
-            $this->runCleanup = true;
+            $registry = $this->dataRegistry();
+            if (time() > $registry['cleanupRunTime'] && !$this->isCleanupRequest())
+            {
+                $registry['cleanupRunHash'] = sha1(uniqid());
+                $this->runCleanup = true;
+            }
         }
 
+        if ($this->config()['system']['configurePhpReporting'] ?? true)
+        {
+            @error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE & ~E_DEPRECATED);
+        }
+        $this->setupSession();
         $this->handleRequest();
+    }
+
+    protected function setupSession(): void
+    {
+        $useBuiltinHandler = $this->config()['system']['useBuiltinSessionHandler'] ?? true;
+        if ($useBuiltinHandler)
+        {
+            session_set_save_handler(new CookieSession($this));
+        }
+
+        session_start();
     }
 
     private function handleRequest(): void
@@ -124,6 +248,9 @@ class App
         {
             header(sprintf('%s: %s', $name, $value));
         }
+
+        session_write_close();
+
         echo $body;
         exit();
     }
@@ -145,6 +272,11 @@ class App
         extract($params);
         require $templateFileName;
 
+        /** @var ArrayObject $pageContainerVariables */
+        $pageContainerVariables = $this->container['page_container.vars'];
+        $currentContent = $pageContainerVariables->exchangeArray([]);
+        $pageContainerVariables->exchangeArray(array_merge($currentContent, $params));
+
         return ob_get_clean();
     }
 
@@ -152,10 +284,10 @@ class App
     {
         if ($this->responseContentType == 'text/html' && $this->includePageContainer)
         {
-            return $this->renderTemplate('PAGE_CONTAINER', [
+            return $this->renderTemplate('PAGE_CONTAINER', array_merge([
                 'pageContent' => $controllerResponse,
-                'options' => self::$config['system']
-            ]);
+                'options' => $this->config()['system']
+            ], $this->container['page_container.vars']->getArrayCopy()));
         }
 
         return $controllerResponse;
@@ -166,7 +298,7 @@ class App
         $templateFileName = $this->templateFileNameCache[$templateName] ?? null;
         if (!$templateFileName)
         {
-            $styleName = self::$config['system']['style'] ?? 'default';
+            $styleName = $this->config()['system']['style'] ?? 'default';
             $templateFileName = $this->formatTemplateFileName($styleName, $templateName);
             if (!file_exists($templateFileName))
             {
@@ -241,7 +373,7 @@ class App
 
     public function db(): PDO
     {
-        return $this->db;
+        return $this->container['db'];
     }
 
     /**
@@ -255,7 +387,7 @@ class App
             $urlParts = $_SERVER['HTTP_REFERER'] ? parse_url($_SERVER['HTTP_REFERER']) : [
                 'scheme' => !empty($_SERVER['HTTPS']) ? 'https' : 'http',
                 'host' => $_SERVER['HTTP_HOST'],
-                'path' => $_SERVER['REQUEST_URI']
+                'path' => $_SERVER['SCRIPT_NAME']
             ];
 
             $url = $this->buildUrl([
@@ -288,19 +420,66 @@ class App
 
     public function config(): array
     {
-        return self::$config;
+        return $this->container['config'];
     }
 
     public function dataRegistry(): DataRegistry
     {
-        return $this->dataRegistry;
+        return $this->container['registry'];
     }
 
     /**
      * @psalm-suppress UndefinedClass
+     * @param mixed $var
      */
     public static function dump($var): void
     {
-        VarDumper::dump($var);
+        if (class_exists(VarDumper::class))
+        {
+            VarDumper::dump($var);
+            return;
+        }
+
+        \var_dump($var);
+    }
+
+    public function cookieManager(): CookieManager
+    {
+        return $this->container['cookieManager'];
+    }
+
+    /**
+     * @psalm-suppress InvalidNullableReturnType
+     * @psalm-suppress NullableReturnStatement
+     */
+    public static function app(): App
+    {
+        if (!self::$app)
+        {
+            self::setup(dirname(__DIR__));
+        }
+
+        return self::$app;
+    }
+
+    public function container(): Container
+    {
+        return $this->container;
+    }
+
+    public function isInstalled(): bool
+    {
+        $success = true;
+
+        try
+        {
+            $this->db();
+        }
+        catch (\PDOException $e)
+        {
+            $success = false;
+        }
+
+        return $success;
     }
 }

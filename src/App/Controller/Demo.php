@@ -72,32 +72,9 @@ class Demo extends AbstractController
         }
         @set_time_limit(0);
 
-        $systemConfig = $this->app()->config()['system'];
-        $registry['cleanupRunTime'] = time() + ($systemConfig['cleanupCooldown'] ?? 7200);
-
-        $stmt = $this->db()->prepare('SELECT * FROM `record` WHERE `uploaded_at` < :time');
-        $stmt->bindValue(':time', time() - ($systemConfig['cleanupCutOff'] ?? 172800));
-        $stmt->execute();
-
-        $demoIds = [];
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $demo)
-        {
-            $demoId = $demo['demo_id'];
-            $demoIds[] = "'$demoId'";
-            $demoFn = \App\Util\Demo::getDemoFileNameByDemoId($demoId);
-            if (file_exists($demoFn))
-            {
-                @unlink($demoFn);
-            }
-        }
-
-        if (!empty($demoIds))
-        {
-            $this->db()->query(sprintf('DELETE FROM `record` WHERE `demo_id` IN (%s)', implode(',', $demoIds)));
-        }
-
         return $this->json([
-            'success' => true
+            'success' => true,
+            'entries' => \App\Util\Demo::cleanup($this->app())
         ]);
     }
 }

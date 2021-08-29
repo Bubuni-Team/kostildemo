@@ -1,0 +1,26 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Andriy
+ * Date: 08.06.2021
+ * Time: 21:25
+ * Made with <3 by West from Bubuni Team
+ */
+
+return [
+    'db' => [
+        'host' => 'localhost',
+        'port' => 3306,
+        'user' => 'root',
+        'password' => 'root',
+        'dbname' => 'demo'
+    ],
+    'system' => [
+        'siteName' => 'Demo system'
+    ],
+    'mapNames' => [
+        'de_dust2' => 'Dust 2',
+        'de_mirage' => 'Mirage',
+        'de_inferno' => 'Inferno'
+    ]
+];

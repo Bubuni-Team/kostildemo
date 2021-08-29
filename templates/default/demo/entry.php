@@ -20,10 +20,17 @@ $mapImage = file_exists($mapImageFullFileName) ?
             './assets/maps/nomap.png';
 
 $playerIds = ',' . implode(',', array_keys($demo['players'])) . ',';
+
+$articleAttributes = [
+    'data-map' => $demo['map'],
+    'data-server' => $demo['server_id'],
+    'data-record' => $demo['record_id'],
+    'data-demo' => $demo['demo_id'],
+    'data-player-ids' => $playerIds
+];
 ?>
 
-<article class="media demoRecord" data-map="<?= htmlspecialchars($demo['map']) ?>" data-server="<?= $demo['server_id'] ?>"
-         data-demo-id="<?= $demo['record_id'] ?>" data-player-ids="<?= $playerIds ?>">
+<article class="media demoRecord" <?= \App\Util\Html::toAttributes($articleAttributes) ?>>
     <figure class="media-left">
         <p class="image is-64x64">
             <img src="<?= $mapImage ?>" title="<?= $prettyMapName ?>" alt="<?= $prettyMapName ?>" />
@@ -82,8 +89,8 @@ $playerIds = ',' . implode(',', array_keys($demo['players'])) . ',';
         </nav>
     </div>
     <?php if (false): /** Стаб, возвращающий всегда false, ибо логина нет. TODO? */ ?>
-    <div class="media-right">
-        <button class="delete"></button>
-    </div>
+        <div class="media-right">
+            <button class="delete"></button>
+        </div>
     <?php endif; ?>
 </article>

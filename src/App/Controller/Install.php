@@ -5,8 +5,19 @@ declare(strict_types=1);
 namespace App\Controller;
 
 
-use App\Dictionary\Migration;
+use App;
+use App\Data\InstallMapName;
+use App\Data\Migration;
 use App\Migration\AbstractMigration;
+use PDO;
+use Throwable;
+use function array_merge;
+use function file_get_contents;
+use function file_put_contents;
+use function json_decode;
+use function json_last_error;
+use function json_last_error_msg;
+use function var_export;
 
 class Install extends AbstractController
 {
@@ -20,15 +31,17 @@ class Install extends AbstractController
 
     public function actionIndex(): string
     {
-        $dbError = '';
-        $isInstalled = $this->isInstalled($dbError);
+        if ($this->isInstalled())
+        {
+            return $this->forbidden();
+        }
+
+        if ($this->isHttpMethod('POST'))
+        {
+            return $this->handleInstallationRequest();
+        }
 
         return $this->template('install/index', [
-            'isInstalled' => $isInstalled,
-
-            'dbError' => $dbError,
-            'serverErrorExplain' => $this->verifyServerConfigurationFill(),
-
             'secondaryTitle' => 'Install'
         ]);
     }
@@ -48,28 +61,128 @@ class Install extends AbstractController
         return 'FALSE';
     }
 
-    public function isInstalled(&$dbError = ''): bool
+    public function isInstalled(): bool
     {
-        $isDbError = true;
-        try
-        {
-            $db = $this->db();
-            $isDbError = false;
+        return $this->app()->isInstalled();
+    }
 
-            $db->query('SELECT * FROM `migration`');
-            return true;
-        }
-        catch (\PDOException $e)
+    protected function handleInstallationRequest(): string
+    {
+        $installData = @json_decode(file_get_contents('php://input'), true);
+        $jsonErrorCode = json_last_error();
+        if ($jsonErrorCode !== JSON_ERROR_NONE)
         {
-            if ($isDbError)
+            return $this->errorJson(
+                -1,
+                sprintf('[%d] %s', $jsonErrorCode, json_last_error_msg()),
+                ['step' => 'handle_request', 'user_friendly_msg' => 'Не удается прочитать команду от клиента установки']
+            );
+        }
+
+        switch ($installData['command'])
+        {
+            case 'verify_database_credentials':
             {
-                $dbError = sprintf('[%d] %s', $e->getCode(), $e->getMessage());
+                $credentials = $installData['credentials'];
+                $dsn = sprintf('mysql:dbname=%s;host=%s;port=%d', $credentials['dbname'],
+                    $credentials['host'], $credentials['port']);
+                $user = $credentials['user'];
+                $passwd = $credentials['password'];
+
+                // Стейджи подключения. Для более простого контроля, где произошёл обсёр именно.
+                // 0 - подключение
+                // 1 - проверка инсталляции
+                // 2 - проверка инсталляции демок конкретно
+                // -1 - "уже есть установка"
+                // -2 - "всё ок"
+                $stage = 0;
+                try
+                {
+                    $db = new PDO($dsn, $user, $passwd, [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                    ]);
+
+                    $stage = 1;
+                    $db->query('SELECT * FROM migration');
+
+                    $stage = 2;
+                    $db->query('SELECT * FROM record');
+
+                    $stage = -1;
+                }
+                catch (\PDOException $e)
+                {
+                    if (!in_array($stage, [1, 2]))
+                    {
+                        $messages = [
+                            0 => 'Не удаётся подключиться к БД: ' . $e->getMessage(),
+                            -1 => 'В этой базе уже есть установка этого веб-скрипта'
+                        ];
+                        return $this->errorJson(
+                            1, $e->getMessage(),
+                            ['step' => 'db_credentials', 'user_friendly_msg' => $messages[$stage]]
+                        );
+                    }
+                }
+
+                return $this->successJson(['step' => 'db_credentials']);
+                break;
             }
-            return false;
+
+            // Этот шаг должен быть вызван только если подключение к БД проверено успешно.
+            case 'run':
+            {
+                // Для начала запишем конфиг.
+                $configuration = [
+                    'db' => $installData['db'],
+                    'system' => $installData['system'],
+                    // 'servers' => $installData['servers'],
+                    'mapNames' => $installData['mapNames'],
+
+                ];
+
+                // Переобойдём администраторов в системе.
+
+                // Попробуем записать конфиг.
+                try
+                {
+                    file_put_contents(App::$dir . '/src/config.php', '<?php return ' . var_export($configuration, true) . ';');
+                }
+                catch (Throwable $e)
+                {
+                    // Похоже, прав на запись в файл нет.
+                    return $this->errorJson(2, $e->getMessage(),
+                        ['step' => 'config_write', 'user_friendly_msg' => 'Не удаётся записать данные в конфиг']);
+                }
+
+                // Теперь попробуем запустить миграции.
+                if ($this->runMigrations())
+                {
+                    return $this->successJson(['redirect' => '?controller=demo&action=index']);
+                }
+            }
         }
     }
 
-    public function runMigrations(): bool
+    protected function errorJson(int $errorCode, string $errorMessage, array $additionalAttributes = []): string
+    {
+        return $this->json(array_merge([
+            'success' => false,
+            'error' => [
+                'msg' => $errorMessage,
+                'code' => $errorCode
+            ]
+        ], $additionalAttributes));
+    }
+
+    protected function successJson(array $additionalAttributes = []): string
+    {
+        return $this->json(array_merge([
+            'success' => true,
+        ], $additionalAttributes));
+    }
+
+    protected function runMigrations(): bool
     {
         $db = $this->db();
         $migrationClasses = Migration::get();
