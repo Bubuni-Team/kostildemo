@@ -56,7 +56,7 @@ class App
 
         ignore_user_abort(true);
         @ini_set('output_buffering', '0');
-        date_default_timezone_set($app->config()['system']['timezone'] ?? 'Europe/Moscow');
+        @error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE & ~E_DEPRECATED);
 
         return self::$app = $app;
     }
@@ -193,10 +193,6 @@ class App
             }
         }
 
-        if ($this->config()['system']['configurePhpReporting'] ?? true)
-        {
-            @error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE & ~E_DEPRECATED);
-        }
         $this->setupSession();
         $this->handleRequest();
     }
