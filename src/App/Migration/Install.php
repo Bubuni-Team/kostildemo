@@ -25,7 +25,7 @@ CREATE TABLE `record_player` (
 	`account_id` INT(11) UNSIGNED NOT NULL,
 	`username` VARCHAR(128) NOT NULL COLLATE 'utf8_general_ci',
 	PRIMARY KEY (`record_id`, `account_id`) USING BTREE,
-	CONSTRAINT `FK_record_player_record` FOREIGN KEY (`record_id`) REFERENCES `demo`.`record` (`record_id`) ON UPDATE RESTRICT ON DELETE RESTRICT
+	CONSTRAINT `FK_record_player_record` FOREIGN KEY (`record_id`) REFERENCES `record` (`record_id`) ON UPDATE RESTRICT ON DELETE RESTRICT
 )
 COLLATE='utf8_general_ci'
 ENGINE=InnoDB;
@@ -38,6 +38,7 @@ ENGINE=InnoDB;
 
     protected $downQueries = [
         "DROP TABLE `record_player`;",
-        "DROP TABLE `record`;"
+        "DROP TABLE `record`;",
+        "DROP TABLE `data_registry`;"
     ];
 }
