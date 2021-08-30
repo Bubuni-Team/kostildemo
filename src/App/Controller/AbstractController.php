@@ -80,6 +80,11 @@ class AbstractController
             return;
         }
 
+        if ($this->isPassedKey())
+        {
+            return;
+        }
+
         $status = 403;
         if ($this->loggedUser() === -1)
         {
@@ -93,6 +98,11 @@ class AbstractController
         }
 
         throw $this->exception('You don\'t have permissions to do that', $status);
+    }
+
+    protected function isPassedKey(): bool
+    {
+        return ($this->getFromRequest('key') === $this->app()->config()['system']['upgradeKey']);
     }
 
     /**

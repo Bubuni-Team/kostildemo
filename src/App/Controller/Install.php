@@ -73,14 +73,7 @@ class Install extends AbstractController
 
     public function canRunMigrations(): bool
     {
-        // If user has key in request from config - then it can be redirected from Installer.
-        if ($this->getFromRequest('key') === $this->app()->config()['system']['upgradeKey'])
-        {
-            return true;
-        }
-
-        // Else just verify user identifier in our array.
-        return $this->isAdmin();
+        return $this->isAdmin() || $this->isPassedKey();
     }
 
     public function isInstalled(): bool
