@@ -259,7 +259,7 @@ HTML;
 
         <!-- Сервера -->
         <hero-section title="Сервера"
-            subtitle="Magna qui esse ut sunt. Ullamco veniam ullamco fugiat aliqua enim elit est velit anim ut pariatur sunt mollit ipsum. Commodo dolore labore nostrud ipsum adipisicing amet non reprehenderit minim proident velit consectetur enim. Ipsum pariatur officia Lorem ipsum ea occaecat fugiat et cillum irure ad. Enim proident aute anim veniam eu. Lorem ipsum et dolore commodo dolore ad nisi fugiat non nostrud ullamco ut. Magna commodo consequat exercitation ea."
+            subtitle="Перечень серверов, которые будут использовать демки. Добавить или отредактировать этот список можно будет позднее в конфигурационном файле."
             :row-class="['is-small']">
 
             <div class="field is-horizontal" v-for="(server, index) in servers" :key="index">
