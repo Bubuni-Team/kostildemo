@@ -195,7 +195,7 @@ class Install extends AbstractController
                 }
 
                 // Теперь отправим юзера запускать миграции.
-                return $this->successJson(['redirect' => '?controller=install&action=migrate&key=' . $configuration['system']['upgrade_key']]);
+                return $this->successJson(['redirect' => '?controller=install&action=migrate&key=' . $configuration['system']['upgradeKey']]);
             }
         }
 
