@@ -208,7 +208,7 @@ HTML;
                 </div>
 
                 <div class="field-body">
-                    <div class="field" v-for="(title, game) in metadata.mapPresets">
+                    <div class="field" v-for="(title, game) in metadata.mapPresets" :key="game">
                         <label class="checkbox">
                             <input type="checkbox" v-model="options.mapPresets" :value="game" />
                             {{ title }}
@@ -217,7 +217,7 @@ HTML;
                 </div>
             </div>
 
-            <div class="field is-horizontal" v-for="(row, index) in mapDict">
+            <div class="field is-horizontal" v-for="(row, index) in mapDict" :key="index">
                 <div class="field-body">
                     <div class="field">
                         <p class="control is-expanded">
@@ -241,7 +241,7 @@ HTML;
             subtitle="Пользователи, которым доступен расширенный функционал после авторизации. Например, они могут удалять выборочно демки до истечения их срока или выполнять операцию обновления веб-части."
             :row-class="['is-small']">
 
-            <div class="field is-horizontal" v-for="(admin, index) in administrators">
+            <div class="field is-horizontal" v-for="(admin, index) in administrators" :key="index">
                 <div class="field-body">
                     <div class="field">
                         <p class="control is-expanded has-icons-left">
@@ -262,7 +262,7 @@ HTML;
             subtitle="Magna qui esse ut sunt. Ullamco veniam ullamco fugiat aliqua enim elit est velit anim ut pariatur sunt mollit ipsum. Commodo dolore labore nostrud ipsum adipisicing amet non reprehenderit minim proident velit consectetur enim. Ipsum pariatur officia Lorem ipsum ea occaecat fugiat et cillum irure ad. Enim proident aute anim veniam eu. Lorem ipsum et dolore commodo dolore ad nisi fugiat non nostrud ullamco ut. Magna commodo consequat exercitation ea."
             :row-class="['is-small']">
 
-            <div class="field is-horizontal" v-for="(server, index) in servers">
+            <div class="field is-horizontal" v-for="(server, index) in servers" :key="index">
                 <div class="field-body">
                     <div class="field">
                         <p class="control is-expanded has-icons-left">
