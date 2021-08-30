@@ -9,6 +9,8 @@ use App;
 use App\Data\InstallMapName;
 use App\Data\Migration;
 use App\Migration\AbstractMigration;
+use Kruzya\SteamIdConverter\Exception\InvalidSteamIdException;
+use Kruzya\SteamIdConverter\SteamID;
 use PDO;
 use Throwable;
 use function array_merge;
@@ -142,6 +144,19 @@ class Install extends AbstractController
                 ];
 
                 // Переобойдём администраторов в системе.
+                $administrators = [];
+                foreach ($installData['administrators'] as $adminRow)
+                {
+                    try
+                    {
+                        $administrators[] = (new SteamID($adminRow['value']))->accountId();
+                    }
+                    catch (InvalidSteamIdException $e)
+                    {
+                        // Suppress.
+                    }
+                }
+                $configuration['system']['administrators'] = $administrators;
 
                 // Попробуем записать конфиг.
                 try

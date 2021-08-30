@@ -24,7 +24,10 @@ class AbstractController
         $this->app = $app;
     }
 
-    public function preAction(): void {}
+    public function preAction(): void
+    {
+        date_default_timezone_set($this->app->config()['system']['timezone'] ?? 'Europe/Moscow');
+    }
 
     protected function app(): App
     {
