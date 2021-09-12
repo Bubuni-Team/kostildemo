@@ -52,7 +52,7 @@ HTML;
                     <div class="field">
                         <p class="control is-expanded has-icons-left">
                             <input class="input" type="text" placeholder="Демо-система для моего проекта"
-                                v-model="options.title" required />
+                                v-model="options.siteName" required />
                             <span class="icon is-small is-left">
                                 <ion-icon name="information-outline"></ion-icon>
                             </span>

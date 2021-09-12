@@ -66,7 +66,7 @@
                 },
 
                 options: {
-                    title: '',
+                    siteName: '',
                     chunkSize: {
                         method: 'auto',
                         count: 2
