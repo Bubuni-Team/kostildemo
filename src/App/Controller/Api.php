@@ -164,7 +164,7 @@ class Api extends AbstractController
 
     protected function getChunkSize(): int
     {
-        $config = $this->app()->config()['system']['chunkSize'] ?? 'auto';
+        $config = $this->app()->config()['system']['chunkSize'];
         if (is_int($config))
         {
             return $config;

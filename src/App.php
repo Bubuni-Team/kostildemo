@@ -107,9 +107,11 @@ class App
                     'chunkSize' => 'auto',
                     'configurePhpReporting' => true,
 
-                    'siteName' => 'Demo System bu Bubuni Team',
+                    'siteName' => 'Demo System by Bubuni Team',
                     'triggerBasedCron' => true,
-                    'cronKey' => ''
+                    'cronKey' => '',
+                    'timezone' => 'Europe/Moscow',
+                    'style' => 'default'
                 ],
 
                 'cookie' => [
@@ -302,8 +304,7 @@ class App
         $templateFileName = $this->templateFileNameCache[$templateName] ?? null;
         if (!$templateFileName)
         {
-            $styleName = $this->config()['system']['style'] ?? 'default';
-            $templateFileName = $this->formatTemplateFileName($styleName, $templateName);
+            $templateFileName = $this->formatTemplateFileName($this->config()['system']['style'], $templateName);
             if (!file_exists($templateFileName))
             {
                 // fallback
@@ -405,6 +406,8 @@ class App
     }
 
     /**
+     * @see https://www.php.net/manual/en/function.parse-url.php#106731
+     *
      * @param array $parts
      * @return string
      */
