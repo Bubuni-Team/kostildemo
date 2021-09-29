@@ -17,6 +17,7 @@ use App\DataRegistry;
 use App\PrintableException;
 use Pimple\Container;
 use Symfony\Component\VarDumper\VarDumper;
+use App\Compression;
 
 class App
 {
@@ -109,7 +110,8 @@ class App
 
                     'siteName' => 'Demo System bu Bubuni Team',
                     'triggerBasedCron' => true,
-                    'cronKey' => ''
+                    'cronKey' => '',
+                    'compressAlgo' => null // Real name - "as_is"
                 ],
 
                 'cookie' => [
@@ -119,7 +121,8 @@ class App
                 ],
 
                 'servers' => [],
-                'mapNames' => []
+                'mapNames' => [],
+                'compressMap' => []
             ];
         };
         $container['config'] = function (Container $c): array
@@ -186,6 +189,21 @@ class App
 
             // And finally we override all own map names - with user definitions and append them.
             return array_merge($result, $mapNames);
+        };
+
+        $container['compressMap'] = function (Container $c): array
+        {
+            $builtInMap = $c['compressMap.builtIn'];
+            return array_merge($builtInMap, $c['config']['compressMap']);
+        };
+        $container['compressMap.builtIn'] = function (Container $c): array
+        {
+            return [
+                'zip' => Compression\ZipCompressor::class,
+                'bzip' => Compression\BzipCompressor::class,
+                'gzip' => Compression\GzipCompressor::class,
+                'as_is' => Compression\SimpleIoCompressor::class // also known as `null`
+            ];
         };
     }
 
@@ -490,5 +508,24 @@ class App
         }
 
         return $success;
+    }
+
+    public function isAdmin(): bool
+    {
+        $administrators = $this->config()['system']['administrators'] ?? [];
+        return in_array($this->loggedUser(), $administrators);
+    }
+
+    /**
+     * @return int
+     */
+    public function loggedUser(): int
+    {
+        if (@session_status() !== PHP_SESSION_ACTIVE)
+        {
+            @session_start();
+        }
+
+        return $_SESSION['steam_id'] ?? -1;
     }
 }

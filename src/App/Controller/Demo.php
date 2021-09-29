@@ -77,4 +77,24 @@ class Demo extends AbstractController
             'entries' => \App\Util\Demo::cleanup($this->app())
         ]);
     }
+
+    public function actionDelete(): string
+    {
+        $this->assertIsAdmin();
+        $demoId = $this->getFromRequest('id');
+
+        $stmt = $this->app()->db()->prepare('SELECT * FROM `record` WHERE `demo_id` = ?');
+        $stmt->execute([$demoId]);
+        $record = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$record)
+        {
+            return $this->json([
+                'success' => false
+            ]);
+        }
+
+        return $this->json([
+            'success' => \App\Util\Demo::delete($record)
+        ]);
+    }
 }

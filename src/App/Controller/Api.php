@@ -12,8 +12,12 @@ namespace App\Controller;
 
 
 use App;
+use App\Compression\AbstractCompressor;
 use App\PrintableException;
 use PDOStatement;
+use function file_exists;
+use function json_encode;
+use function unlink;
 
 class Api extends AbstractController
 {
@@ -28,7 +32,7 @@ class Api extends AbstractController
             throw $this->exception('API key must be provided in request', 400);
         }
 
-        if (!$this->getServerIdByKey($key))
+        if ($this->getServerIdByKey($key) === null)
         {
             throw $this->exception('Invalid key', 400);
         }
@@ -91,7 +95,8 @@ class Api extends AbstractController
         $chunkList = array_diff(scandir($chunkDir), ['.', '..']);
         sort($chunkList);
 
-        $demoFd = fopen(\App\Util\Demo::getDemoFileNameByDemoId($demoId), 'wb');
+        $recordPath = \App\Util\Demo::getLocalPath($demoId, 'as_is', []);
+        $demoFd = fopen($recordPath, 'wb');
         try
         {
             foreach ($chunkList as $chunkName)
@@ -117,13 +122,39 @@ class Api extends AbstractController
         }
         rmdir($chunkDir);
 
+        // Try to perform compressing operation.
+        $compressAlgo = $this->app()->config()['system']['compressAlgo'] ?? 'as_is';
+        $compressData = [];
+        if ($compressAlgo !== 'as_is')
+        {
+            $compressor = App\Util\Compress::getCompressor($compressAlgo);
+            if ($compressor instanceof AbstractCompressor)
+            {
+                $targetPath = sprintf('%s/data/demos/%s', App::$dir,
+                    $compressor->buildRelativePath($demoId, []));
+                $compressData = $compressor->compress($recordPath, $targetPath);
+
+                if ($compressData === null)
+                {
+                    if (@file_exists($targetPath)) @unlink($targetPath);
+
+                    $compressData = [];
+                    $compressAlgo = 'as_is';
+                }
+                else
+                {
+                    @unlink($recordPath);
+                }
+            }
+        }
+
         $db = $this->db();
 
         $db->beginTransaction();
         $demoInsertStmt = $db->prepare(
             'INSERT INTO `record` 
-                        (demo_id, server_id, map, uploaded_at, started_at, finished_at) 
-                 VALUES (:demoId, :serverId, :map, :uploadedAt, :startedAt, :finishedAt)'
+                        (`demo_id`, `server_id`, `map`, `uploaded_at`, `started_at`, `finished_at`, `algo`, `algo_data`) 
+                 VALUES (:demoId, :serverId, :map, :uploadedAt, :startedAt, :finishedAt, :algo, :algoData)'
         );
 
         $this->bulkBindValue($demoInsertStmt, [
@@ -132,8 +163,11 @@ class Api extends AbstractController
             ':map' => str_replace('\\', '/', $demoData['play_map']),
             ':uploadedAt' => time(),
             ':startedAt' => $demoData['start_time'],
-            ':finishedAt' => $demoData['end_time']
+            ':finishedAt' => $demoData['end_time'],
+            ':algo' => $compressAlgo,
+            ':algoData' => json_encode($compressData)
         ]);
+
         $demoInsertStmt->execute();
         $recordId = $db->lastInsertId();
 

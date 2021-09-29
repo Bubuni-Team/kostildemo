@@ -28,6 +28,9 @@ $articleAttributes = [
     'data-demo' => $demo['demo_id'],
     'data-player-ids' => $playerIds
 ];
+
+$compressor = \App\Util\Compress::getCompressor($demo['algo']);
+
 ?>
 
 <article class="media demoRecord" <?= \App\Util\Html::toAttributes($articleAttributes) ?>>
@@ -70,7 +73,7 @@ $articleAttributes = [
         </div>
         <nav class="level is-mobile">
             <div class="level-left">
-                <a class="level-item demo-download" href="./data/demos/<?= $demo['demo_id'] ?>.dem">
+                <a class="level-item demo-download" href="./data/demos/<?= $compressor->buildRelativePath($demo['demo_id'], json_decode($demo['algo_data'])) ?>">
                     <span class="icon is-small"><ion-icon name="cloud-download-outline"></ion-icon></span>
                 </a>
                 <div class="level-item demoLength">
@@ -88,7 +91,7 @@ $articleAttributes = [
             </div>
         </nav>
     </div>
-    <?php if (false): /** Стаб, возвращающий всегда false, ибо логина нет. TODO? */ ?>
+    <?php if (\App::app()->isAdmin()): ?>
         <div class="media-right">
             <button class="delete"></button>
         </div>
