@@ -13,6 +13,9 @@
         "kruzya/steam-id-converter": "^1.0",
         "pimple/pimple": "^3.0"
     },
+    "suggest": {
+        "ext-zip": "For compressing demo records in ZIP"
+    },
     "repositories": [
         {
             "type": "vcs",
