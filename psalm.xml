@@ -10,7 +10,7 @@
         <directory name="src" />
         <ignoreFiles>
             <directory name="vendor" />
-            <file name="src/Compression/ZipCompression.php" />
+            <directory name="src/App/Compression" />
         </ignoreFiles>
     </projectFiles>
 
