@@ -23,6 +23,9 @@ class Str
 
     public static function format(string $str, array $args = [], string $startToken = '{', string $endToken = '}'): string
     {
+        // Scratch, if our string starts with token. TODO: remove.
+        $str = '_' . $str;
+
         while (true)
         {
             $startTok = strtok($str, $startToken);
@@ -47,7 +50,7 @@ class Str
             $str = str_replace(sprintf('%s%s%s', $startToken, $searchableStr, $endToken), $arg, $str);
         }
 
-        return $str;
+        return \substr($str, 1);
     }
 
     /**

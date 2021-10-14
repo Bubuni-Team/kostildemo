@@ -68,7 +68,6 @@ class Demo
             $escapedDemoIdsWithSeparator = implode(', ', $escapedDemoIds);
 
             $db->query(sprintf('DELETE FROM `record` WHERE `demo_id` IN (%s)', $escapedDemoIdsWithSeparator));
-            $db->query(sprintf('DELETE FROM `record` WHERE `demo_id` IN (%s)', $escapedDemoIdsWithSeparator));
         }
 
         return $demoIds;
@@ -86,8 +85,6 @@ class Demo
             $db = \App::app()->db();
 
             $db->prepare('DELETE FROM `record` WHERE `demo_id` = ?')
-                ->execute([$demoId]);
-            $db->prepare('DELETE FROM `record_player` WHERE `demo_id` = ?')
                 ->execute([$demoId]);
         }
 

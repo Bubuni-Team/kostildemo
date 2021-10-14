@@ -111,7 +111,8 @@ class App
                     'siteName' => 'Demo System bu Bubuni Team',
                     'triggerBasedCron' => true,
                     'cronKey' => '',
-                    'compressAlgo' => null // Real name - "as_is"
+                    'compressAlgo' => null, // Real name - "as_is"
+                    'fileNameFormat' => '{ demo_id }.{ file_extension }'
                 ],
 
                 'cookie' => [

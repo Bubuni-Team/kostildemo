@@ -38,7 +38,7 @@ class Arr
             $key = $prefix . $key;
             if (is_array($value))
             {
-                yield from self::createContext($source, $delimiter, $key . $delimiter);
+                yield from self::createContext($value, $delimiter, $key . $delimiter);
                 continue;
             }
 

@@ -15,9 +15,10 @@ class Compress
      * Returns the cached compressor.
      *
      * @param string $algoName
+     * @param bool $verifyUsable
      * @return AbstractCompressor|null
      */
-    public static function getCompressor(string $algoName): ?AbstractCompressor
+    public static function getCompressor(string $algoName, bool $verifyUsable = true): ?AbstractCompressor
     {
         self::checkMap();
 
@@ -26,7 +27,7 @@ class Compress
         if ($compressor === null)
         {
             $handler = self::getHandlerClass($algoName);
-            if ($handler !== null && self::isUsable($handler))
+            if ($handler !== null)
             {
                 /** @var AbstractCompressor $compressor */
                 $compressor = new $handler(\App::app());
@@ -34,7 +35,9 @@ class Compress
             }
         }
 
-        return $compressor;
+        return (!$verifyUsable || ($compressor !== null && $compressor::isSupportedAlgo())) ?
+            $compressor :
+            null;
     }
 
     /**

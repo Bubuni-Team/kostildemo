@@ -22,7 +22,7 @@ class ZipCompressor extends AbstractCompressor
         // class_exists() can trigger composer autoload code, so we use this check
         // only if extension_loaded() is finished with `true` result for reducing
         // IO operations.
-        return !class_exists('ZipArchive');
+        return class_exists('ZipArchive');
     }
 
     public static function getFileExtension(): string
