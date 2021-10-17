@@ -18,6 +18,7 @@ use App\PrintableException;
 use Pimple\Container;
 use Symfony\Component\VarDumper\VarDumper;
 use App\Compression;
+use App\Util\Arr;
 
 class App
 {
@@ -51,6 +52,23 @@ class App
     public static function setup(string $dir): App
     {
         require_once $dir . '/vendor/autoload.php';
+
+        $requirements = [
+            'JSON' => 'json_encode',
+            'PDO' => 'pdo_drivers'
+        ];
+        foreach ($requirements as $req => $fn)
+        {
+            if (!function_exists($fn))
+            {
+                die("$req extension is required.");
+            }
+        }
+
+        if (!in_array('mysql', PDO::getAvailableDrivers()))
+        {
+            die('PDO MySQL driver is required');
+        }
 
         self::$dir = $dir;
         $app = new App();
@@ -92,8 +110,14 @@ class App
             ];
         };
 
-        $container['config.default'] = function (): array
+        $container['config.default'] = function (Container $c): array
         {
+            $configPath = $c['config.path'];
+            $contents = file_exists($configPath) ?
+                file_get_contents($configPath) :
+                php_uname();
+            $configHash = md5($contents);
+
             return [
                 'db' => [
                     'host' => 'localhost', // 'database.local',
@@ -112,7 +136,9 @@ class App
                     'triggerBasedCron' => true,
                     'cronKey' => '',
                     'compressAlgo' => null, // Real name - "as_is"
-                    'fileNameFormat' => '{ demo_id }.{ file_extension }'
+                    'fileNameFormat' => '{ demo_id }.{ file_extension }',
+                    'upgradeKey' => $configHash,
+                    'administrators' => []
                 ],
 
                 'cookie' => [
@@ -128,17 +154,21 @@ class App
         };
         $container['config'] = function (Container $c): array
         {
-            $path = App::$dir . '/src/config.php';
+            $path = $c['config.path'];
             $data = $c['config.default'];
 
             $data['config_exists'] = false;
             if (file_exists($path))
             {
-                $data = array_merge($data, require($path));
+                $data = Arr::mergeRecursive($data, require($path));
                 $data['config_exists'] = true;
             }
 
             return $data;
+        };
+        $container['config.path'] = function (Container $c): string
+        {
+            return App::$dir . '/src/config.php';
         };
 
         $container['db'] = function (Container $c): PDO
@@ -513,7 +543,7 @@ class App
 
     public function isAdmin(): bool
     {
-        $administrators = $this->config()['system']['administrators'] ?? [];
+        $administrators = $this->config()['system']['administrators'];
         return in_array($this->loggedUser(), $administrators);
     }
 

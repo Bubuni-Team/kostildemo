@@ -81,7 +81,7 @@ $context['file_extension'] = $compressor::getFileExtension();
         <nav class="level is-mobile">
             <div class="level-left">
                 <a class="level-item demo-download" href="./data/demos/<?= $compressor->buildRelativePath($demo['demo_id'], $demo['algo_data']) ?>"
-                   download="<?= \App\Util\Str::format($this->config()['system']['fileNameFormat'] ?? '{ demo_id }.{ file_extension }', $context) ?>">
+                   download="<?= \App\Util\Str::format($this->config()['system']['fileNameFormat'], $context) ?>">
                     <span class="icon is-small"><ion-icon name="cloud-download-outline"></ion-icon></span>
                 </a>
                 <div class="level-item demoLength">

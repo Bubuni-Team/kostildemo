@@ -7,10 +7,12 @@ namespace App\Util;
 use ArrayAccess;
 use Generator;
 use LogicException;
+use function array_is_list;
 use function array_key_exists;
 use function array_key_first;
 use function array_key_last;
 use function array_keys;
+use function array_values;
 use function call_user_func_array;
 use function count;
 use function func_get_args;
@@ -19,6 +21,7 @@ use function get_class;
 use function gettype;
 use function implode;
 use function is_array;
+use function is_int;
 use function is_object;
 
 class Arr
@@ -104,6 +107,46 @@ class Arr
     }
 
     /**
+     * Merges passed arrays recursively.
+     * If element value type is not array, then value just replaces.
+     * Note: don't pass to this function lists.
+     *
+     * @return array
+     */
+    public static function mergeRecursive(): array
+    {
+        $arrays = func_get_args();
+        foreach ($arrays as $idx => $element)
+        {
+            if (!self::is($element))
+            {
+                throw new \LogicException("Passed argument {$idx} isn't array");
+            }
+        }
+
+        $total = array_shift($arrays) ?? [];
+        foreach ($arrays as $subArray)
+        {
+            foreach ($subArray as $key => $value)
+            {
+                if (self::is($value))
+                {
+                    $total[$key] = $total[$key] ?? [];
+                    $total[$key] = self::isList($value) ?
+                        self::merge($total[$key], $value) :
+                        self::mergeRecursive($total[$key], $value);
+
+                    continue;
+                }
+
+                $total[$key] = $value;
+            }
+        }
+
+        return $total;
+    }
+
+    /**
      * Gets the first key of an array
      *
      * @param  array	$array
@@ -119,6 +162,43 @@ class Arr
         // some PHP versions can't handle code like "func()[0]".
         $keys = array_keys($array);
         return $keys[0] ?? null;
+    }
+
+    /**
+     * Checks whether a given array is a list.
+     *
+     * @param array $array
+     * @return bool
+     */
+    public static function isList(array $array): bool
+    {
+        if (function_exists('array_is_list'))
+        {
+            return array_is_list($array);
+        }
+
+        // Implementation partially copied from PHP source code.
+        // https://github.com/php/php-src/blob/8356da600b433320307f206d2029f0ccfe894fc5/Zend/zend_hash.h#L1234-L1258
+        if ($array === [] || $array === array_values($array))
+        {
+            return true;
+        }
+
+        $expectedIndex = -1;
+        foreach (array_keys($array) as $key)
+        {
+            if (!is_int($key) || $key != ++$expectedIndex)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function is($data): bool
+    {
+        return is_array($data);
     }
 
     /**
