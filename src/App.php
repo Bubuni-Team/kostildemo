@@ -46,9 +46,6 @@ class App
     /** @var array  */
     protected $templateFileNameCache = [];
 
-    /** @var bool */
-    protected $runCleanup = false;
-
     public static function setup(string $dir): App
     {
         require_once $dir . '/vendor/autoload.php';
@@ -140,7 +137,9 @@ class App
                     'compressAlgo' => null, // Real name - "as_is"
                     'fileNameFormat' => '{ demo_id }.{ file_extension }',
                     'upgradeKey' => $configHash,
-                    'administrators' => []
+                    'administrators' => [],
+                    'mapPresets' => [],
+                    'cronRun' => 'activityBased'
                 ],
 
                 'cookie' => [
@@ -244,11 +243,17 @@ class App
     {
         if ($this->isInstalled() && $this->getControllerName() !== 'Install')
         {
+            $config = $this->config();
             $registry = $this->dataRegistry();
-            if (time() > $registry['cleanupRunTime'] && !$this->isCleanupRequest())
+
+            if (time() > $registry['cleanupRunTime'] && !$this->isCleanupRequest() &&
+                $config['system']['cronRun'] === 'activityBased')
             {
-                $registry['cleanupRunHash'] = sha1(uniqid());
-                $this->runCleanup = true;
+                $cleanupRunHash = sha1(uniqid());
+                $registry['cleanupRunHash'] = $cleanupRunHash;
+
+                $this->container['page_container.vars']['cronCleanup'] = sprintf(
+                    '<meta name="job_key" content="%s" />', $cleanupRunHash);
             }
         }
 

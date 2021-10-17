@@ -14,5 +14,9 @@ if (PHP_SAPI !== 'cli')
 $dir = __DIR__;
 require_once $dir . '/src/App.php';
 $app = App::setup($dir);
+if ($app->config()['system']['cronRun'] !== 'serverBased')
+{
+    die('Set up this script first as primary CRON runner via "src/config.php".');
+}
 
 \App\Util\Demo::cleanup($app);
