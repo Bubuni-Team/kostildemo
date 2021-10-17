@@ -5,7 +5,7 @@
  * @noinspection PhpUnhandledExceptionInspection
  */
 
-$demo['algo_data'] = @json_decode($demo['algo_data']);
+$demo['compress_algo_data'] = @json_decode($demo['compress_algo_data']);
 
 $demoMapName = $demo['map'];
 $mapNameLastSlashIndex = strrpos($demoMapName, '/');
@@ -28,7 +28,7 @@ $articleAttributes = [
     'data-player-ids' => $playerIds
 ];
 
-$compressor = \App\Util\Compress::getCompressor($demo['algo'], false);
+$compressor = \App\Util\Compress::getCompressor($demo['compress_algo'], false);
 
 $demo['server'] = $server;
 $players = $demo['players'];

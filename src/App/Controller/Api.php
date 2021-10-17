@@ -153,7 +153,7 @@ class Api extends AbstractController
         $db->beginTransaction();
         $demoInsertStmt = $db->prepare(
             'INSERT INTO `record` 
-                        (`demo_id`, `server_id`, `map`, `uploaded_at`, `started_at`, `finished_at`, `algo`, `algo_data`) 
+                        (`demo_id`, `server_id`, `map`, `uploaded_at`, `started_at`, `finished_at`, `compress_algo`, `compress_algo_data`) 
                  VALUES (:demoId, :serverId, :map, :uploadedAt, :startedAt, :finishedAt, :algo, :algoData)'
         );
 
