@@ -64,9 +64,13 @@ class Demo extends AbstractController
      */
     public function actionCleanup(): string
     {
-        $registry = $this->app()->dataRegistry();
+        $app = $this->app();
+
         $hash = $this->getFromRequest('hash');
-        if (!$hash || $registry['cleanupRunHash'] !== $hash)
+        $validHashes = [$app->dataRegistry()['cleanupRunHash'],
+            $this->app()->config()['system']['upgradeKey']];
+
+        if (!in_array($hash, $validHashes))
         {
             throw $this->exception('Not found', 404);
         }
@@ -74,7 +78,27 @@ class Demo extends AbstractController
 
         return $this->json([
             'success' => true,
-            'entries' => \App\Util\Demo::cleanup($this->app())
+            'entries' => \App\Util\Demo::cleanup($app)
+        ]);
+    }
+
+    public function actionDelete(): string
+    {
+        $this->assertIsAdmin();
+        $demoId = $this->getFromRequest('id');
+
+        $stmt = $this->app()->db()->prepare('SELECT * FROM `record` WHERE `demo_id` = ?');
+        $stmt->execute([$demoId]);
+        $record = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$record)
+        {
+            return $this->json([
+                'success' => false
+            ]);
+        }
+
+        return $this->json([
+            'success' => \App\Util\Demo::delete($record)
         ]);
     }
 }

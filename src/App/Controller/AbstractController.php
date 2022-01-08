@@ -108,23 +108,14 @@ class AbstractController
     /**
      * @return bool
      */
-    protected function isAdmin()
+    protected function isAdmin(): bool
     {
-        $administrators = $this->app->config()['system']['administrators'] ?? [];
-        return in_array($this->loggedUser(), $administrators);
+        return $this->app->isAdmin();
     }
 
-    /**
-     * @return int
-     */
-    protected function loggedUser()
+    protected function loggedUser(): int
     {
-        if (@session_status() !== PHP_SESSION_ACTIVE)
-        {
-            @session_start();
-        }
-
-        return $_SESSION['steam_id'] ?? -1;
+        return $this->app->loggedUser();
     }
 
     /**

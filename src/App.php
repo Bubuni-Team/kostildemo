@@ -17,6 +17,8 @@ use App\DataRegistry;
 use App\PrintableException;
 use Pimple\Container;
 use Symfony\Component\VarDumper\VarDumper;
+use App\Compression;
+use App\Util\Arr;
 
 class App
 {
@@ -44,12 +46,26 @@ class App
     /** @var array  */
     protected $templateFileNameCache = [];
 
-    /** @var bool */
-    protected $runCleanup = false;
-
     public static function setup(string $dir): App
     {
         require_once $dir . '/vendor/autoload.php';
+
+        $requirements = [
+            'JSON' => 'json_encode',
+            'PDO' => 'pdo_drivers'
+        ];
+        foreach ($requirements as $req => $fn)
+        {
+            if (!function_exists($fn))
+            {
+                die("$req extension is required.");
+            }
+        }
+
+        if (!in_array('mysql', PDO::getAvailableDrivers()))
+        {
+            die('PDO MySQL driver is required');
+        }
 
         self::$dir = $dir;
         $app = new App();
@@ -91,8 +107,14 @@ class App
             ];
         };
 
-        $container['config.default'] = function (): array
+        $container['config.default'] = function (Container $c): array
         {
+            $configPath = $c['config.path'];
+            $contents = file_exists($configPath) ?
+                file_get_contents($configPath) :
+                php_uname();
+            $configHash = md5($contents);
+
             return [
                 'db' => [
                     'host' => 'localhost', // 'database.local',
@@ -111,7 +133,13 @@ class App
                     'triggerBasedCron' => true,
                     'cronKey' => '',
                     'timezone' => 'Europe/Moscow',
-                    'style' => 'default'
+                    'style' => 'default',
+                    'compressAlgo' => null, // Real name - "as_is"
+                    'fileNameFormat' => '{ demo_id }.{ file_extension }',
+                    'upgradeKey' => $configHash,
+                    'administrators' => [],
+                    'mapPresets' => [],
+                    'cronRun' => 'activityBased'
                 ],
 
                 'cookie' => [
@@ -121,22 +149,27 @@ class App
                 ],
 
                 'servers' => [],
-                'mapNames' => []
+                'mapNames' => [],
+                'compressMap' => []
             ];
         };
         $container['config'] = function (Container $c): array
         {
-            $path = App::$dir . '/src/config.php';
+            $path = $c['config.path'];
             $data = $c['config.default'];
 
             $data['config_exists'] = false;
             if (file_exists($path))
             {
-                $data = array_merge($data, require($path));
+                $data = Arr::mergeRecursive($data, require($path));
                 $data['config_exists'] = true;
             }
 
             return $data;
+        };
+        $container['config.path'] = function (Container $c): string
+        {
+            return App::$dir . '/src/config.php';
         };
 
         $container['db'] = function (Container $c): PDO
@@ -189,17 +222,38 @@ class App
             // And finally we override all own map names - with user definitions and append them.
             return array_merge($result, $mapNames);
         };
+
+        $container['compressMap'] = function (Container $c): array
+        {
+            $builtInMap = $c['compressMap.builtIn'];
+            return array_merge($builtInMap, $c['config']['compressMap']);
+        };
+        $container['compressMap.builtIn'] = function (Container $c): array
+        {
+            return [
+                'zip' => Compression\ZipCompressor::class,
+                'bzip' => Compression\BzipCompressor::class,
+                'gzip' => Compression\GzipCompressor::class,
+                'as_is' => Compression\SimpleIoCompressor::class // also known as `null`
+            ];
+        };
     }
 
     public function run(): void
     {
         if ($this->isInstalled() && $this->getControllerName() !== 'Install')
         {
+            $config = $this->config();
             $registry = $this->dataRegistry();
-            if (time() > $registry['cleanupRunTime'] && !$this->isCleanupRequest())
+
+            if (time() > $registry['cleanupRunTime'] && !$this->isCleanupRequest() &&
+                $config['system']['cronRun'] === 'activityBased')
             {
-                $registry['cleanupRunHash'] = sha1(uniqid());
-                $this->runCleanup = true;
+                $cleanupRunHash = sha1(uniqid());
+                $registry['cleanupRunHash'] = $cleanupRunHash;
+
+                $this->container['page_container.vars']['cronCleanup'] = sprintf(
+                    '<meta name="job_key" content="%s" />', $cleanupRunHash);
             }
         }
 
@@ -493,5 +547,24 @@ class App
         }
 
         return $success;
+    }
+
+    public function isAdmin(): bool
+    {
+        $administrators = $this->config()['system']['administrators'];
+        return in_array($this->loggedUser(), $administrators);
+    }
+
+    /**
+     * @return int
+     */
+    public function loggedUser(): int
+    {
+        if (@session_status() !== PHP_SESSION_ACTIVE)
+        {
+            @session_start();
+        }
+
+        return $_SESSION['steam_id'] ?? -1;
     }
 }

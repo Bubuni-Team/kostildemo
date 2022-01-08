@@ -33,9 +33,36 @@
                         return;
                     }
 
-                    data.entries.forEach(demo => document.querySelector('[data-demo-id="' + demo + '"]').remove());
+                    data.entries.forEach(demo => document.querySelector('[data-demo="' + demo + '"]').remove());
                 })
                 .catch(error => console.error('Error when deleting a demo records:', error));
+        })();
+
+        // Initialize delete buttons.
+        (function ()
+        {
+            const onDeleteHandler = function (ev)
+            {
+                const button = ev.currentTarget;
+                const recordElement = button.closest('[data-demo]');
+
+                fetch(PublicURL + '?controller=demo&action=delete&id=' + recordElement.dataset.demoId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success)
+                        {
+                            return;
+                        }
+
+                        recordElement.remove();
+                    });
+            };
+
+            const deleteButtons = document.querySelectorAll('.js-deleteDemoRecord');
+            for (const deleteButton of deleteButtons)
+            {
+                deleteButton.addEventListener('click', onDeleteHandler);
+            }
         })();
     });
 })(window, document);

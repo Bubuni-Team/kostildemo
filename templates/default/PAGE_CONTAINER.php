@@ -20,11 +20,6 @@
         <script nomodule="" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.js"></script>
 
         <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
-
-        <?php if ($this->runCleanup): ?>
-            <meta name="job_key" content="<?= $this->dataRegistry()['cleanupRunHash'] ?>" />
-        <?php endif; ?>
-
         <link rel="stylesheet" href="assets/css/main.css" />
 
         <?php foreach ($headAdditionalCode ?? [] as $key => $str): ?>
