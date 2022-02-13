@@ -1,0 +1,2 @@
+# Mark sample config file as PHP
+*.php.sample		linguist-language=php
