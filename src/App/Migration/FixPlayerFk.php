@@ -13,7 +13,7 @@ class FixPlayerFk extends SimpleAbstractQueryMigration
 	            FOREIGN KEY (`record_id`)
 	                REFERENCES `record` (`record_id`)
 	            ON UPDATE CASCADE
-	            ON DELETE RESTRICT;
+	            ON DELETE CASCADE;
     "];
 
     public function preDown(): void
