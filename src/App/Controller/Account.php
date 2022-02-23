@@ -7,6 +7,9 @@ namespace App\Controller;
 use Kruzya\SteamIdConverter\SteamID;
 use LightOpenID;
 
+/**
+ * @psalm-suppress InvalidScalarArgument
+ */
 class Account extends AbstractController
 {
     public function preAction(): void
