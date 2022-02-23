@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Cookie;
 
 use App\Collection\SimpleCollection;
+use ArrayAccess;
 use LogicException;
 
 class CookieManager extends SimpleCollection

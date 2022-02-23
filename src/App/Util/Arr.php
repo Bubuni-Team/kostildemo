@@ -7,7 +7,6 @@ namespace App\Util;
 use ArrayAccess;
 use Generator;
 use LogicException;
-use function array_is_list;
 use function array_key_exists;
 use function array_key_first;
 use function array_key_last;
@@ -174,7 +173,7 @@ class Arr
     {
         if (function_exists('array_is_list'))
         {
-            return array_is_list($array);
+            return \array_is_list($array);
         }
 
         // Implementation partially copied from PHP source code.
@@ -196,6 +195,11 @@ class Arr
         return true;
     }
 
+    /**
+     * Checks passed value type and returns true if type is array.
+     * @param mixed $data
+     * @return bool
+     */
     public static function is($data): bool
     {
         return is_array($data);

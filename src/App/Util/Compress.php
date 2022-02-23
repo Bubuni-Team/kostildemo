@@ -8,7 +8,10 @@ use function count;
 
 class Compress
 {
+    /** @var array<string, AbstractCompressor> */
     protected static $compressors = [];
+
+    /** @var array<string,string> */
     protected static $map = [];
 
     /**

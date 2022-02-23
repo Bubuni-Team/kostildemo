@@ -4,7 +4,17 @@ declare(strict_types=1);
 namespace App\Collection;
 
 
-abstract class AbstractCollection implements \ArrayAccess, \Countable, \IteratorAggregate
+use ArrayAccess;
+use ArrayIterator;
+use IteratorAggregate;
+use Traversable;
+
+/**
+ * @template T
+ * @template-implements ArrayAccess<array-key, T>
+ * @template-implements IteratorAggregate<array-key, T>
+ */
+abstract class AbstractCollection implements ArrayAccess, \Countable, IteratorAggregate
 {
     /**
      * @var array
@@ -139,9 +149,9 @@ abstract class AbstractCollection implements \ArrayAccess, \Countable, \Iterator
     #endregion
 
     #region IteratorAggregate implementation
-    public function getIterator(): \ArrayIterator
+    public function getIterator(): Traversable
     {
-        return new \ArrayIterator($this->_values);
+        return new ArrayIterator($this->_values);
     }
     #endregion
 }
