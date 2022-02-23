@@ -22,6 +22,8 @@
         <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
         <link rel="stylesheet" href="assets/css/main.css" />
 
+        <script src="assets/js/public.js"></script>
+
         <?php foreach ($headAdditionalCode ?? [] as $key => $str): ?>
             <!-- <?= $key ?> -->
             <?= $str ?>
