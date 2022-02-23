@@ -18,7 +18,6 @@ jobs:
         run: composer validate --strict
 
       - name: Psalm
-        uses: docker://vimeo/psalm-github-actions
+        uses: docker://vimeo/psalm-github-actions:4.21.0
         with:
-          composer_ignore_platform_reqs: false
-
+          composer_ignore_platform_reqs: true

@@ -15,6 +15,9 @@ use ArrayAccess;
 use PDO;
 use PDOStatement;
 
+/**
+ * @template-implements ArrayAccess<string,mixed>
+ */
 class DataRegistry implements ArrayAccess
 {
     /** @var App */

@@ -296,7 +296,7 @@ class App
         }
         catch (PrintableException $e)
         {
-            $this->sendError((int) $e->getCode(), $e->getMessage());
+            $this->sendError(intval($e->getCode()), $e->getMessage());
         }
     }
 

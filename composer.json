@@ -28,7 +28,8 @@
         }
     },
     "require-dev": {
-        "vimeo/psalm": "^4.8",
-        "symfony/var-dumper": "^5.3"
+        "vimeo/psalm": "^4.21",
+        "symfony/var-dumper": "^5.3",
+        "nikic/php-parser": "^4.13"
     }
 }

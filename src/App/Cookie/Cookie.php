@@ -131,7 +131,7 @@ class Cookie
     }
 
     /**
-     * @return bool|int|float
+     * @return false|int|float
      */
     public function getMaxAge()
     {
@@ -283,7 +283,10 @@ class Cookie
         $maxAge = $this->getMaxAge();
         if ($maxAge !== false)
         {
-            /** @psalm-suppress InvalidScalarArgument */
+            /**
+             * @psalm-suppress InvalidScalarArgument
+             * @psalm-suppress PossiblyInvalidArgument
+             */
             $data[] = sprintf('Max-Age=%d', $maxAge);
         }
 
