@@ -5,7 +5,7 @@ namespace App\Collection;
 
 
 /**
- * @psalm-suppress MissingTemplateParams
+ * @template T mixed
  */
 class SimpleCollection extends AbstractCollection
 {
